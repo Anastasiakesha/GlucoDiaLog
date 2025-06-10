@@ -81,7 +81,7 @@ class UnifiedEntryAdapter(
             }
             is InsulinViewHolder -> {
                 val e = (entry as UnifiedEntry.Insulin)
-                holder.bind("Инсулин: ${e.typeName} Доза: ${e.entry.doseUnits} Ед в ${formatTime(e.entry.timestamp)}")
+                holder.bind("Инсулин: ${e.typeName} Доза: ${e.entry.doseUnits} ${e.entry.unit} в ${formatTime(e.entry.timestamp)}")
             }
             is ActivityViewHolder -> {
                 val e = (entry as UnifiedEntry.Activity)

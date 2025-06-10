@@ -1,6 +1,5 @@
 package com.example.glucodialog
 
-
 import android.os.Bundle
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
@@ -17,6 +16,7 @@ class AddInsulinActivity : AppCompatActivity() {
 
     private lateinit var spinnerInsulinType: Spinner
     private lateinit var etInsulinDose: EditText
+    private lateinit var spinnerUnit: Spinner
     private lateinit var tvSelectedTime: TextView
     private lateinit var btnPickTime: Button
     private lateinit var btnSave: Button
@@ -26,6 +26,7 @@ class AddInsulinActivity : AppCompatActivity() {
     private var isDateTimeSelected = false
 
     private var insulinTypes: List<InsulinType> = emptyList()
+    private val unitOptions = listOf("Ед", "Ед/ч")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,9 +35,14 @@ class AddInsulinActivity : AppCompatActivity() {
         // Инициализация UI
         spinnerInsulinType = findViewById(R.id.spinnerInsulinType)
         etInsulinDose = findViewById(R.id.etInsulinDose)
+        spinnerUnit = findViewById(R.id.spinnerUnit)
         tvSelectedTime = findViewById(R.id.tvSelectedTime)
         btnPickTime = findViewById(R.id.btnPickInsulinTime)
         btnSave = findViewById(R.id.btnSaveInsulin)
+
+        // Настройка спиннера единиц
+        val unitAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, unitOptions)
+        spinnerUnit.adapter = unitAdapter
 
         updateDateTimeDisplay()
 
@@ -112,10 +118,12 @@ class AddInsulinActivity : AppCompatActivity() {
         }
 
         val selectedType = insulinTypes[selectedIndex]
+        val selectedUnit = spinnerUnit.selectedItem.toString()
 
         val entry = InsulinEntry(
             insulinTypeId = selectedType.id,
             doseUnits = dose,
+            unit = selectedUnit,
             timestamp = calendar.timeInMillis
         )
 

@@ -1,7 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
-    //alias(libs.plugins.kotlin.kapt)
     id("org.jetbrains.kotlin.kapt")
 }
 
@@ -52,9 +51,11 @@ dependencies {
     implementation(libs.androidx.room.runtime.android)
     implementation(libs.androidx.room.ktx)
     implementation(libs.mpandroidchart)
+    implementation(libs.jxl)
     testImplementation(libs.junit)
     kapt(libs.androidx.room.compiler)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+
 
 }

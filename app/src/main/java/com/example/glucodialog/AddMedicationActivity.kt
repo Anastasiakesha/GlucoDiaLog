@@ -1,21 +1,17 @@
 package com.example.glucodialog
 
 import android.annotation.SuppressLint
-import android.app.DatePickerDialog
-import android.app.TimePickerDialog
 import android.os.Bundle
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.example.glucodialog.data.AppDatabase
 import com.example.glucodialog.data.MedicationEntry
 import com.example.glucodialog.data.MedicationType
+import com.example.glucodialog.utils.DateTimeHelper
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
 import java.util.*
-import com.example.glucodialog.utils.DateTimeHelper
-
 
 class AddMedicationActivity : AppCompatActivity() {
 
@@ -37,7 +33,6 @@ class AddMedicationActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_medication)
 
-        // Инициализация UI
         spinnerMedication = findViewById(R.id.spinnerMedication)
         etDosage = findViewById(R.id.etDosage)
         tvSelectedTime = findViewById(R.id.tvSelectedTime)
@@ -55,14 +50,24 @@ class AddMedicationActivity : AppCompatActivity() {
             saveMedicationToDatabase()
         }
 
+        setupUnitSpinner()
         loadMedicationTypes()
+    }
+
+    private fun setupUnitSpinner() {
+        val units = listOf("мг", "мкг", "мл", "таб")
+        val unitAdapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_spinner_dropdown_item,
+            units
+        )
+        spinnerUnit.adapter = unitAdapter
     }
 
     private fun loadMedicationTypes() {
         val db = AppDatabase.getDatabase(this)
 
         scope.launch {
-            // Получаем список типов из базы данных
             medicationTypes = db.medicationDao().getAllMedicationTypes().first()
 
             runOnUiThread {
@@ -90,11 +95,9 @@ class AddMedicationActivity : AppCompatActivity() {
         }
     }
 
-
     private fun updateDateTimeDisplay() {
         tvSelectedTime.text = DateTimeHelper.formatDateTime(calendar)
     }
-
 
     private fun saveMedicationToDatabase() {
         val dosageText = etDosage.text.toString()
@@ -116,8 +119,46 @@ class AddMedicationActivity : AppCompatActivity() {
         }
 
         val selectedMedicationType = medicationTypes[selectedIndex]
+        val unit = spinnerUnit.selectedItem?.toString() ?: ""
         val timestamp = calendar.timeInMillis
-        val unit = spinnerUnit.selectedItem?.toString() ?: "г"
+
+        val doseValue = dosageText.toDoubleOrNull()
+        if (doseValue == null || doseValue <= 0.0) {
+            Toast.makeText(this, "Введите корректную числовую дозу", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // Валидация по единице измерения
+        when (unit) {
+            "мг" -> {
+                if (doseValue > 3000) {
+                    Toast.makeText(this, "Слишком большая доза в мг", Toast.LENGTH_SHORT).show()
+                    return
+                }
+            }
+            "мкг" -> {
+                if (doseValue > 1000) {
+                    Toast.makeText(this, "Слишком большая доза в мкг", Toast.LENGTH_SHORT).show()
+                    return
+                }
+            }
+            "мл" -> {
+                if (doseValue > 100) {
+                    Toast.makeText(this, "Слишком большой объем в мл", Toast.LENGTH_SHORT).show()
+                    return
+                }
+            }
+            "таб" -> {
+                if (doseValue > 10) {
+                    Toast.makeText(this, "Слишком много таблеток", Toast.LENGTH_SHORT).show()
+                    return
+                }
+            }
+            else -> {
+                Toast.makeText(this, "Выберите единицу измерения", Toast.LENGTH_SHORT).show()
+                return
+            }
+        }
 
         val entry = MedicationEntry(
             medicationTypeId = selectedMedicationType.id,

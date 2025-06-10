@@ -36,7 +36,7 @@ class InsulinEntryAdapter(
         val formattedTime = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
             .format(Date(entry.timestamp))
 
-        holder.tvSummary.text = "$insulinInfo – ${entry.doseUnits} ед. ($formattedTime)"
+        holder.tvSummary.text = "$insulinInfo – ${entry.doseUnits} ${entry.unit} ($formattedTime)"
     }
 
     override fun getItemCount() = entries.size

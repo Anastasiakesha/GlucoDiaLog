@@ -7,6 +7,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import com.example.glucodialog.data.migrations.MIGRATION_1_2
+import com.example.glucodialog.data.migrations.MIGRATION_2_3
+import com.example.glucodialog.data.migrations.MIGRATION_3_4
+
 
 @Database(
     entities = [
@@ -16,7 +19,7 @@ import com.example.glucodialog.data.migrations.MIGRATION_1_2
         InsulinEntry::class, InsulinType::class,
         MedicationEntry::class, MedicationType::class
     ],
-    version = 2,
+    version = 4,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -38,7 +41,7 @@ abstract class AppDatabase : RoomDatabase() {
                     "gluco_database"
                 )
 //                  .fallbackToDestructiveMigration(true)
-                    .addMigrations(MIGRATION_1_2)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                     .addCallback(AppDatabaseCallback())
                     .build()
                 INSTANCE = instance
@@ -62,9 +65,10 @@ abstract class AppDatabase : RoomDatabase() {
             // Предзаполнение продуктов
             db.foodDao().insertAllFoodItems(
                 listOf(
-                    FoodItem(name = "Яблоко", calories = 52, proteins = 0.3, fats = 0.2, carbs = 14.0),
-                    FoodItem(name = "Куриная грудка", calories = 165, proteins = 31.0, fats = 3.6, carbs = 0.0),
-                    FoodItem(name = "Хлеб", calories = 250, proteins = 8.0, fats = 2.5, carbs = 48.0)
+                    FoodItem(name = "Яблоко", calories = 52, proteins = 0.3, fats = 0.2, carbs = 14.0, allowedUnits = "г"),
+                    FoodItem(name = "Куриная грудка", calories = 165, proteins = 31.0, fats = 3.6, carbs = 0.0, allowedUnits = "г"),
+                    FoodItem(name = "Хлеб", calories = 250, proteins = 8.0, fats = 2.5, carbs = 48.0, allowedUnits = "г"),
+                    FoodItem(name = "Молоко", calories = 60, proteins = 3.2, fats = 3.5, carbs = 4.7, allowedUnits = "г,мл")
                 )
             )
 

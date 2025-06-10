@@ -37,6 +37,11 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnViewStatistics).setOnClickListener {
             startActivity(Intent(this, GlucoseStatsActivity::class.java))
         }
+
+        findViewById<Button>(R.id.btnExportReport).setOnClickListener {
+            startActivity(Intent(this, ExportReportActivity::class.java))
+        }
+
     }
 }
 

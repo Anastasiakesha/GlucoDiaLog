@@ -10,5 +10,6 @@ data class FoodItem(
     val calories: Int,
     val proteins: Double,
     val fats: Double,
-    val carbs: Double
+    val carbs: Double,
+    val allowedUnits: String
 )

@@ -9,5 +9,6 @@ data class InsulinEntry(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val insulinTypeId: Int,
     val doseUnits: Double,
+    val unit: String,
     val timestamp: Long
 )

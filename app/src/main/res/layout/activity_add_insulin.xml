@@ -1,39 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
-    android:padding="16dp"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <Spinner
-        android:id="@+id/spinnerInsulinType"
+    <LinearLayout
+        android:orientation="vertical"
+        android:padding="16dp"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content">
 
-    <EditText
-        android:id="@+id/etInsulinDose"
-        android:hint="Доза (ед.)"
-        android:inputType="numberDecimal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        <Spinner
+            android:id="@+id/spinnerInsulinType"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp" />
 
-    <TextView
-        android:id="@+id/tvSelectedTime"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Дата и время"
-        android:layout_marginTop="12dp" />
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp">
 
-    <Button
-        android:id="@+id/btnPickInsulinTime"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Выбрать дату и время" />
+            <EditText
+                android:id="@+id/etInsulinDose"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="Доза"
+                android:inputType="numberDecimal" />
 
-    <Button
-        android:id="@+id/btnSaveInsulin"
-        android:text="Сохранить"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+            <Spinner
+                android:id="@+id/spinnerUnit"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:minWidth="80dp" />
+        </LinearLayout>
 
-</LinearLayout>
+        <TextView
+            android:id="@+id/tvSelectedTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Дата и время"
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/btnPickInsulinTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Выбрать дату и время"
+            android:layout_marginBottom="16dp" />
+
+
+        <Button
+            android:id="@+id/btnSaveInsulin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Сохранить" />
+    </LinearLayout>
+</ScrollView>

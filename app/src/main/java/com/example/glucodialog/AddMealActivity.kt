@@ -89,6 +89,7 @@ class AddMealActivity : AppCompatActivity() {
                         parent: AdapterView<*>, view: android.view.View?, position: Int, id: Long
                     ) {
                         selectedFoodItem = foodItems[position]
+                        updateUnitSpinner()
                         updateNutritionDisplay()
                     }
 
@@ -98,6 +99,15 @@ class AddMealActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    private fun updateUnitSpinner() {
+        val food = selectedFoodItem ?: return
+        val allowedUnits = food.allowedUnits.split(",").map { it.trim() }
+
+        val unitAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, allowedUnits)
+        unitAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinnerUnit.adapter = unitAdapter
     }
 
     private fun saveMealToDatabase() {

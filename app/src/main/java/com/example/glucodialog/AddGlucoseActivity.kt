@@ -16,10 +16,14 @@ class AddGlucoseActivity : AppCompatActivity() {
     private lateinit var tvSelectedTime: TextView
     private lateinit var btnPickTime: Button
     private lateinit var btnSave: Button
+    private lateinit var spinnerUnit: Spinner
+    private val units = listOf("ммоль/л", "мг/дл")
+
 
     private val calendar = Calendar.getInstance()
     private val scope = MainScope()
     private var isDateTimeSelected = false
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,6 +33,13 @@ class AddGlucoseActivity : AppCompatActivity() {
         tvSelectedTime = findViewById(R.id.tvSelectedTime)
         btnPickTime = findViewById(R.id.btnPickGlucoseTime)
         btnSave = findViewById(R.id.btnSaveGlucose)
+
+        spinnerUnit = findViewById(R.id.spinnerUnit)
+
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, units)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinnerUnit.adapter = adapter
+
 
         updateDateTimeDisplay()
 
@@ -55,6 +66,7 @@ class AddGlucoseActivity : AppCompatActivity() {
 
     private fun saveGlucoseToDatabase() {
         val glucoseText = etGlucoseValue.text.toString()
+        val selectedUnit = spinnerUnit.selectedItem.toString()
 
         if (glucoseText.isBlank()) {
             Toast.makeText(this, "Введите уровень глюкозы", Toast.LENGTH_SHORT).show()
@@ -67,15 +79,27 @@ class AddGlucoseActivity : AppCompatActivity() {
         }
 
         val glucoseLevel = glucoseText.toDoubleOrNull()
-        if (glucoseLevel == null || glucoseLevel < 0) {
-            Toast.makeText(this, "Некорректное значение глюкозы", Toast.LENGTH_SHORT).show()
+        if (glucoseLevel == null) {
+            Toast.makeText(this, "Некорректное значение", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+
+        val valid = when (selectedUnit) {
+            "ммоль/л" -> glucoseLevel in 2.0..33.3
+            "мг/дл" -> glucoseLevel in 36.0..600.0
+            else -> false
+        }
+
+        if (!valid) {
+            Toast.makeText(this, "Значение вне допустимого диапазона для $selectedUnit", Toast.LENGTH_SHORT).show()
             return
         }
 
         val timestamp = calendar.timeInMillis
         val entry = GlucoseEntry(
             glucoseLevel = glucoseLevel,
-            unit = "ммоль/л",
+            unit = selectedUnit,
             timestamp = timestamp
         )
 
@@ -88,4 +112,5 @@ class AddGlucoseActivity : AppCompatActivity() {
             }
         }
     }
+
 }
