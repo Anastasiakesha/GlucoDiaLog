@@ -10,6 +10,13 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
 
+    <TextView
+        android:id="@+id/tvHbA1c"
+        android:text="HbA1c: -"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+
     <TextView android:id="@+id/tvDailyCount"
         android:text="Измерений в день: -"
         android:layout_width="wrap_content"

@@ -28,4 +28,8 @@ interface ActivityDao {
     @Transaction
     @Query("SELECT * FROM activity_entries ORDER BY timestamp DESC")
     suspend fun getAllActivityEntriesOnceWithTypes(): List<ActivityEntryWithType>
+
+    @Query("SELECT * FROM activity_types WHERE LOWER(name) = LOWER(:name) LIMIT 1")
+    suspend fun getActivityTypeByName(name: String): ActivityType?
+
 }

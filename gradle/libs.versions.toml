@@ -15,6 +15,11 @@ roomCommonJvm = "2.7.1"
 roomRuntimeAndroid = "2.7.1"
 roomCompiler = "2.7.1"
 jxl = "2.6.12"
+mockito-core = "org.mockito:mockito-core:5.5.0"
+mockito-inline = "org.mockito:mockito-inline:5.2.0"
+mockito-kotlin = "org.mockito.kotlin:mockito-kotlin:5.2.1"
+workRuntimeKtx = "2.10.1"
+
 
 
 [libraries]
@@ -33,6 +38,10 @@ androidx-room-common-jvm = { group = "androidx.room", name = "room-common-jvm", 
 androidx-room-runtime-android = { group = "androidx.room", name = "room-runtime-android", version.ref = "roomRuntimeAndroid" }
 mpandroidchart = { group = "com.github.PhilJay", name = "MPAndroidChart", version.ref = "mpandroidchart" }
 jxl = { module = "net.sourceforge.jexcelapi:jxl", version.ref = "jxl" }
+mockito-core = { group = "org.mockito", name = "mockito-core", version.ref = "mockito-core" }
+mockito-inline = { group = "org.mockito", name = "mockito-inline", version.ref = "mockito-inline" }
+mockito-kotlin = { group = "org.mockito.kotlin", name = "mockito-kotlin", version.ref = "mockito-kotlin" }
+androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "workRuntimeKtx" }
 
 
 [plugins]

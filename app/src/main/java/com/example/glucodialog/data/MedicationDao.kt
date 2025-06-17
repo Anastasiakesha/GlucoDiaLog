@@ -28,4 +28,8 @@ interface MedicationDao {
     @Transaction
     @Query("SELECT * FROM medication_entries ORDER BY timestamp DESC")
     suspend fun getAllMedicationEntriesOnceWithTypes(): List<MedicationEntryWithType>
+
+    @Query("SELECT * FROM medication_types WHERE LOWER(name) = LOWER(:name) LIMIT 1")
+    suspend fun getMedicationTypeByName(name: String): MedicationType?
+
 }

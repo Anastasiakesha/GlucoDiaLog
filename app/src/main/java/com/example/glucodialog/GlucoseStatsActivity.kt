@@ -21,6 +21,8 @@ class GlucoseStatsActivity : AppCompatActivity() {
     private lateinit var tvDailyCount: TextView
     private lateinit var tvMinMax: TextView
     private lateinit var chart: LineChart
+    private lateinit var tvHbA1c: TextView
+
 
     private val scope = MainScope()
 
@@ -32,6 +34,7 @@ class GlucoseStatsActivity : AppCompatActivity() {
         tvDailyCount = findViewById(R.id.tvDailyCount)
         tvMinMax = findViewById(R.id.tvMinMax)
         chart = findViewById(R.id.glucoseChart)
+        tvHbA1c = findViewById(R.id.tvHbA1c)
 
         observeGlucoseData()
     }
@@ -62,10 +65,14 @@ class GlucoseStatsActivity : AppCompatActivity() {
 
         val avgDaily = measurementsPerDay.values.average()
 
+        val estimatedHbA1c = (avg + 2.52) / 1.59
+
         tvAverage.text = "Среднее: %.2f ммоль/л".format(avg)
-        tvMinMax.text = "Мин/Макс: %.1f / %.1f".format(min, max)
+        tvMinMax.text = "Мин/Макс: %.1f / %.1f".format(min ?: 0.0, max ?: 0.0)
         tvDailyCount.text = "Измерений в день: %.1f".format(avgDaily)
+        tvHbA1c.text = "HbA1c: %.2f %%".format(estimatedHbA1c)
     }
+
 
     private fun updateChart(entries: List<GlucoseEntry>) {
         val sorted = entries.sortedBy { it.timestamp }

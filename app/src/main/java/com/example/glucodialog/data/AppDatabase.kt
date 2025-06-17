@@ -9,7 +9,13 @@ import kotlinx.coroutines.launch
 import com.example.glucodialog.data.migrations.MIGRATION_1_2
 import com.example.glucodialog.data.migrations.MIGRATION_2_3
 import com.example.glucodialog.data.migrations.MIGRATION_3_4
-
+import com.example.glucodialog.data.migrations.MIGRATION_4_5
+import com.example.glucodialog.data.migrations.MIGRATION_5_6
+import com.example.glucodialog.data.migrations.MIGRATION_6_7
+import com.example.glucodialog.data.migrations.MIGRATION_7_8
+import com.example.glucodialog.data.migrations.MIGRATION_8_9
+import com.example.glucodialog.data.migrations.MIGRATION_9_10
+import kotlinx.coroutines.flow.first
 
 @Database(
     entities = [
@@ -17,9 +23,10 @@ import com.example.glucodialog.data.migrations.MIGRATION_3_4
         FoodEntry::class, FoodItem::class,
         GlucoseEntry::class,
         InsulinEntry::class, InsulinType::class,
-        MedicationEntry::class, MedicationType::class
+        MedicationEntry::class, MedicationType::class,
+        UserProfile::class
     ],
-    version = 4,
+    version = 10,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -29,6 +36,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun glucoseDao(): GlucoseDao
     abstract fun insulinDao(): InsulinDao
     abstract fun medicationDao(): MedicationDao
+    abstract fun userProfileDao(): UserProfileDao
+
 
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null
@@ -41,7 +50,7 @@ abstract class AppDatabase : RoomDatabase() {
                     "gluco_database"
                 )
 //                  .fallbackToDestructiveMigration(true)
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10)
                     .addCallback(AppDatabaseCallback())
                     .build()
                 INSTANCE = instance
@@ -61,6 +70,8 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+
+
         private suspend fun preloadData(db: AppDatabase) {
             // Предзаполнение продуктов
             db.foodDao().insertAllFoodItems(
@@ -75,8 +86,8 @@ abstract class AppDatabase : RoomDatabase() {
             // Предзаполнение инсулина
             db.insulinDao().insertAllInsulinTypes(
                 listOf(
-                    InsulinType(name = "Новорапид", type = "Быстродействующий", durationHours = 4),
-                    InsulinType(name = "Лантус", type = "Длительного действия", durationHours = 24)
+                    InsulinType(name = "Новорапид", type = "Болюсный", durationHours = 4),
+                    InsulinType(name = "Лантус", type = "Базальный", durationHours = 24)
                 )
             )
 

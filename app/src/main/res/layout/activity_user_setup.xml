@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp">
+
+        <EditText android:id="@+id/etName"
+            android:hint="Имя"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+        <EditText android:id="@+id/etEmail"
+            android:hint="Email"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textEmailAddress"/>
+        <Spinner android:id="@+id/spinnerGender"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+        <EditText android:id="@+id/etWeight"
+            android:hint="Вес (кг)"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal"/>
+        <EditText android:id="@+id/etHeight"
+            android:hint="Рост (см)"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal"/>
+        <Spinner android:id="@+id/spinnerDiabetesType"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+        <LinearLayout android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <EditText android:id="@+id/etTargetGlucoseLow"
+                android:hint="Целевой сахар низкий"
+                android:layout_weight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:inputType="numberDecimal"/>
+            <EditText android:id="@+id/etTargetGlucoseHigh"
+                android:hint="Целевой сахар высокий"
+                android:layout_weight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:inputType="numberDecimal"/>
+        </LinearLayout>
+        <Spinner android:id="@+id/spinnerGlucoseUnit"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <TextView android:text="Болюсный инсулин"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <Spinner android:id="@+id/spinnerBolus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+        <EditText android:id="@+id/etBolusDose"
+            android:hint="Суточная доза болюсного инсулина"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal"/>
+
+        <TextView android:text="Базальный инсулин"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <Spinner android:id="@+id/spinnerBasal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+        <EditText android:id="@+id/etBasalDose"
+            android:hint="Суточная доза базального инсулина"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal"/>
+
+        <TextView android:text="Лекарственный препарат"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <Spinner android:id="@+id/spinnerMedication"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+        <EditText android:id="@+id/etMedicationDose"
+            android:hint="Суточная дозировка препарата"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal"/>
+        <Spinner
+            android:id="@+id/spinnerMedicationUnit"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+        <TextView
+            android:id="@+id/tvMedicationTime"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Время приёма лекарства"
+            android:textSize="16sp"
+            android:padding="8dp"
+            android:background="?attr/selectableItemBackground"
+            android:gravity="center_vertical"
+            android:drawableEnd="@android:drawable/ic_menu_recent_history"
+            android:clickable="true"
+            android:focusable="true" />
+
+
+
+
+        <Button android:id="@+id/btnSaveUserSetup" android:text="Сохранить" android:layout_width="match_parent" android:layout_height="wrap_content" />
+
+    </LinearLayout>
+</ScrollView>
+

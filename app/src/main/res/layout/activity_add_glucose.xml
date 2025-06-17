@@ -27,6 +27,15 @@
             android:layout_weight="1" />
     </LinearLayout>
 
+
+    <TextView
+        android:id="@+id/tvCorrectionDose"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Корректирующая доза: -"
+        android:layout_marginTop="16dp" />
+
+
     <TextView
         android:id="@+id/tvSelectedTime"
         android:layout_width="wrap_content"

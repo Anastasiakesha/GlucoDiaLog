@@ -64,6 +64,22 @@
             android:layout_height="wrap_content" />
 
         <TextView
+            android:id="@+id/tvICRatio"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Углеводный коэффициент: -"
+            android:layout_marginTop="8dp"/>
+
+
+        <TextView
+            android:id="@+id/tvCalculatedInsulin"
+            android:text="Инсулин: -"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" />
+
+
+        <TextView
             android:id="@+id/tvSelectedTime"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

@@ -8,8 +8,6 @@ import android.widget.Toast
 import com.example.glucodialog.data.AppDatabase
 import jxl.Workbook
 import jxl.write.Label
-import jxl.write.Number
-import jxl.write.WritableWorkbook
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -23,100 +21,130 @@ object ExcelExporter {
         val fileName = "glucodialog_export_${System.currentTimeMillis()}.xls"
         val fileDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
 
-        if (!fileDir.exists()) {
-            val created = fileDir.mkdirs()
-            if (!created) {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(
-                        context,
-                        "Ошибка: не удалось создать директорию для сохранения файла.",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-                return@withContext
+        if (!fileDir.exists() && !fileDir.mkdirs()) {
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, "Не удалось создать папку для сохранения.", Toast.LENGTH_LONG).show()
             }
+            return@withContext
         }
 
         val file = File(fileDir, fileName)
 
         try {
-            val workbook: WritableWorkbook = Workbook.createWorkbook(file)
+            val allEntries = mutableListOf<List<String>>()
 
-            // === 1. Глюкоза ===
-            val glucoseSheet = workbook.createSheet("Глюкоза", 0)
-            glucoseSheet.addCell(Label(0, 0, "Уровень"))
-            glucoseSheet.addCell(Label(1, 0, "Единица измерения"))
-            glucoseSheet.addCell(Label(2, 0, "Дата и время"))
-
-            val glucoseEntries = db.glucoseDao().getAllGlucoseEntriesOnce()
-            glucoseEntries.forEachIndexed { i, entry ->
-                glucoseSheet.addCell(Number(0, i + 1, entry.glucoseLevel))
-                glucoseSheet.addCell(Label(1, i + 1, entry.unit))
-                glucoseSheet.addCell(Label(2, i + 1, dateFormat.format(Date(entry.timestamp))))
+            // === Глюкоза ===
+            db.glucoseDao().getAllGlucoseEntriesOnce().forEach {
+                allEntries.add(
+                    listOf(
+                        "Глюкоза",
+                        dateFormat.format(Date(it.timestamp)),
+                        "",
+                        it.glucoseLevel.toString(),
+                        it.unit,
+                        it.note.toString()
+                    )
+                )
             }
 
-            // === 2. Инсулин ===
-            val insulinSheet = workbook.createSheet("Инсулин", 1)
-            insulinSheet.addCell(Label(0, 0, "Тип инсулина"))
-            insulinSheet.addCell(Label(1, 0, "Доза"))
-            insulinSheet.addCell(Label(2, 0, "Единица"))
-            insulinSheet.addCell(Label(3, 0, "Дата и время"))
-
-            val insulinEntries = db.insulinDao().getAllInsulinEntriesOnceWithTypes()
-            insulinEntries.forEachIndexed { i, entry ->
-                insulinSheet.addCell(Label(0, i + 1, entry.type.name))
-                insulinSheet.addCell(Number(1, i + 1, entry.entry.doseUnits))
-                insulinSheet.addCell(Label(2, i + 1, entry.entry.unit))
-                insulinSheet.addCell(Label(3, i + 1, dateFormat.format(Date(entry.entry.timestamp))))
+            // === Инсулин ===
+            db.insulinDao().getAllInsulinEntriesOnceWithTypes().forEach {
+                allEntries.add(
+                    listOf(
+                        "Инсулин",
+                        dateFormat.format(Date(it.entry.timestamp)),
+                        it.type.name,
+                        it.entry.doseUnits.toString(),
+                        it.entry.unit
+                    )
+                )
             }
 
-            // === 3. Лекарства ===
-            val medsSheet = workbook.createSheet("Лекарства", 2)
-            medsSheet.addCell(Label(0, 0, "Препарат"))
-            medsSheet.addCell(Label(1, 0, "Единица измерения"))
-            medsSheet.addCell(Label(2, 0, "Доза"))
-            medsSheet.addCell(Label(3, 0, "Дата и время"))
-
-            val medsEntries = db.medicationDao().getAllMedicationEntriesOnceWithTypes()
-            medsEntries.forEachIndexed { i, entry ->
-                medsSheet.addCell(Label(0, i + 1, entry.type.name))
-                medsSheet.addCell(Label(1, i + 1, entry.entry.unit))
-                medsSheet.addCell(Label(2, i + 1, entry.entry.dose))
-                medsSheet.addCell(Label(3, i + 1, dateFormat.format(Date(entry.entry.timestamp))))
+            // === Лекарства ===
+            db.medicationDao().getAllMedicationEntriesOnceWithTypes().forEach {
+                allEntries.add(
+                    listOf(
+                        "Лекарство",
+                        dateFormat.format(Date(it.entry.timestamp)),
+                        it.type.name,
+                        it.entry.dose,
+                        it.entry.unit
+                    )
+                )
             }
 
-            // === 4. Активность ===
-            val activitySheet = workbook.createSheet("Активность", 3)
-            activitySheet.addCell(Label(0, 0, "Тип"))
-            activitySheet.addCell(Label(1, 0, "Длительность (мин)"))
-            activitySheet.addCell(Label(2, 0, "Дата и время"))
-
-            val activityEntries = db.activityDao().getAllActivityEntriesOnceWithTypes()
-            activityEntries.forEachIndexed { i, entry ->
-                activitySheet.addCell(Label(0, i + 1, entry.type.name))
-                activitySheet.addCell(Number(1, i + 1, entry.entry.durationMinutes.toDouble()))
-                activitySheet.addCell(Label(2, i + 1, dateFormat.format(Date(entry.entry.timestamp))))
+            // === Активность ===
+            db.activityDao().getAllActivityEntriesOnceWithTypes().forEach {
+                allEntries.add(
+                    listOf(
+                        "Активность",
+                        dateFormat.format(Date(it.entry.timestamp)),
+                        it.type.name,
+                        it.entry.durationMinutes.toString(),
+                        "мин"
+                    )
+                )
             }
 
-            // === 5. Питание ===
-            val foodSheet = workbook.createSheet("Питание", 4)
-            foodSheet.addCell(Label(0, 0, "Продукт"))
-            foodSheet.addCell(Label(1, 0, "Единица измерения"))
-            foodSheet.addCell(Label(2, 0, "Углеводы"))
-            foodSheet.addCell(Label(3, 0, "Дата и время"))
+            // === Питание ===
+            db.foodDao().getAllFoodEntriesOnceWithItems().forEach {
+                allEntries.add(
+                    listOf(
+                        "Питание",
+                        dateFormat.format(Date(it.entry.timestamp)),
+                        it.foodItem.name,
+                        it.entry.quantity.toString(),
+                        it.entry.unit,
+                        "",
+                        it.foodItem.carbs.toString(),
+                        it.foodItem.calories.toString(),
+                        it.foodItem.proteins.toString(),
+                        it.foodItem.fats.toString()
+                    )
+                )
+            }
 
-            val foodEntries = db.foodDao().getAllFoodEntriesOnceWithItems()
-            foodEntries.forEachIndexed { i, entry ->
-                foodSheet.addCell(Label(0, i + 1, entry.foodItem.name))
-                foodSheet.addCell(Label(1, i + 1, entry.entry.unit))
-                foodSheet.addCell(Number(2, i + 1, entry.foodItem.carbs))
-                foodSheet.addCell(Label(3, i + 1, dateFormat.format(Date(entry.entry.timestamp))))
+            // Сортировка от нового к старому
+            allEntries.sortByDescending {
+                try {
+                    dateFormat.parse(it[1])?.time ?: 0L
+                } catch (e: Exception) {
+                    0L
+                }
+            }
+
+            val workbook = Workbook.createWorkbook(file)
+            val sheet = workbook.createSheet("Данные", 0)
+
+            // Заголовки
+            val headers = listOf(
+                "Тип записи",        // 0
+                "Дата и время",      // 1
+                "Название / Тип",    // 2
+                "Кол-во / Доза",     // 3
+                "Единицы измерения",  // 4
+                "Предупреждения",
+                "Углеводы",
+                "Калории",
+                "Белки",
+                "Жиры"
+
+            )
+
+            headers.forEachIndexed { col, name ->
+                sheet.addCell(Label(col, 0, name))
+            }
+
+            // Данные
+            allEntries.forEachIndexed { rowIndex, row ->
+                row.forEachIndexed { colIndex, value ->
+                    sheet.addCell(Label(colIndex, rowIndex + 1, value))
+                }
             }
 
             workbook.write()
             workbook.close()
 
-            // === Обновление MediaStore ===
             MediaScannerConnection.scanFile(
                 context,
                 arrayOf(file.absolutePath),
@@ -126,7 +154,7 @@ object ExcelExporter {
             }
 
             withContext(Dispatchers.Main) {
-                Toast.makeText(context, "Файл экспортирован в:\n${file.absolutePath}", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, "Файл экспортирован:\n${file.absolutePath}", Toast.LENGTH_LONG).show()
             }
 
         } catch (e: Exception) {

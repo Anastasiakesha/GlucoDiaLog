@@ -28,4 +28,8 @@ interface FoodDao {
     @Transaction
     @Query("SELECT * FROM food_entries ORDER BY timestamp DESC")
     suspend fun getAllFoodEntriesOnceWithItems(): List<FoodEntryWithItem>
+
+    @Query("SELECT * FROM food_items WHERE LOWER(name) = LOWER(:name) LIMIT 1")
+    suspend fun getFoodItemByName(name: String): FoodItem?
+
 }

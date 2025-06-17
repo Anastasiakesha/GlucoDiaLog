@@ -8,5 +8,6 @@ data class GlucoseEntry(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val glucoseLevel: Double,
     val unit: String,
-    val timestamp: Long
+    val timestamp: Long,
+    val note: String? = null
 )

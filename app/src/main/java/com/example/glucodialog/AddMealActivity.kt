@@ -27,12 +27,17 @@ class AddMealActivity : AppCompatActivity() {
     private lateinit var btnSaveMeal: Button
     private lateinit var tvSelectedTime: TextView
     private lateinit var btnPickTime: Button
+    private lateinit var tvCalculatedInsulin: TextView
+    private lateinit var tvICRatio: TextView
+
+
 
     private lateinit var foodItems: List<FoodItem>
     private var selectedFoodItem: FoodItem? = null
 
     private val calendar = Calendar.getInstance()
     private var isDateTimeSelected = false
+    private var icValue: Double? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,12 +54,15 @@ class AddMealActivity : AppCompatActivity() {
         btnSaveMeal = findViewById(R.id.btnSaveMeal)
         tvSelectedTime = findViewById(R.id.tvSelectedTime)
         btnPickTime = findViewById(R.id.btnPickMealTime)
+        tvCalculatedInsulin = findViewById(R.id.tvCalculatedInsulin)
+        tvICRatio = findViewById(R.id.tvICRatio)
 
         updateDateTimeDisplay()
         btnPickTime.setOnClickListener { showDateTimePicker() }
         btnSaveMeal.setOnClickListener { saveMealToDatabase() }
 
         loadFoodItems()
+        loadUserProfileAndCalculateIC()
 
         etQuantity.addTextChangedListener(object : android.text.TextWatcher {
             override fun afterTextChanged(s: android.text.Editable?) {
@@ -147,6 +155,22 @@ class AddMealActivity : AppCompatActivity() {
         }
     }
 
+    private fun updateCalculatedInsulin() {
+        val quantity = etQuantity.text.toString().toDoubleOrNull() ?: 0.0
+        val food = selectedFoodItem ?: return
+        val factor = quantity / 100.0
+        val carbs = food.carbs * factor
+
+        val ic = icValue
+        if (ic != null && ic > 0) {
+            val insulin = carbs / ic
+            tvCalculatedInsulin.text = "Инсулин: %.1f ед.".format(insulin)
+        } else {
+            tvCalculatedInsulin.text = "Инсулин: недоступно"
+        }
+    }
+
+
     private fun updateNutritionDisplay() {
         val quantity = etQuantity.text.toString().toDoubleOrNull() ?: 0.0
         val food = selectedFoodItem ?: return
@@ -157,7 +181,37 @@ class AddMealActivity : AppCompatActivity() {
         tvProteins.text = "Белки: %.1f г".format(food.proteins * factor)
         tvFats.text = "Жиры: %.1f г".format(food.fats * factor)
         tvCarbs.text = "Углеводы: %.1f г".format(food.carbs * factor)
+
+        updateCalculatedInsulin()
+
     }
+
+    private fun loadUserProfileAndCalculateIC() {
+        val db = AppDatabase.getDatabase(this)
+        lifecycleScope.launch {
+            val profile = db.userProfileDao().getUserProfile().first()
+            if (profile != null) {
+                val tdd = profile.basalDose + profile.bolusDose
+                if (tdd > 0) {
+                    val ic = 500 / tdd
+                    icValue = ic
+                    runOnUiThread {
+                        tvICRatio.text = "Углеводный коэффициент: %.1f г/ед.".format(ic)
+                        updateCalculatedInsulin()
+                    }
+                } else {
+                    runOnUiThread {
+                        tvICRatio.text = "Углеводный коэффициент: недостаточно данных"
+                    }
+                }
+            } else {
+                runOnUiThread {
+                    tvICRatio.text = "Углеводный коэффициент: профиль не найден"
+                }
+            }
+        }
+    }
+
 
     private fun showDateTimePicker() {
         DateTimeHelper.showDateTimePicker(this, calendar) { selectedCalendar ->
