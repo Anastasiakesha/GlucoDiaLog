@@ -41,7 +41,7 @@ object Notifier {
         }
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_health) // не забудь, чтобы иконка реально была в res/drawable!
+            .setSmallIcon(R.drawable.ic_health)
             .setContentTitle(title)
             .setContentText(message)
             .setStyle(NotificationCompat.BigTextStyle().bigText(message))
