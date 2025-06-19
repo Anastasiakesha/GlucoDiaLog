@@ -22,7 +22,7 @@ class AddPhysicalActivity : AppCompatActivity() {
 
     private val calendar = Calendar.getInstance()
     private val scope = MainScope()
-    private var isDateTimeSelected = false
+    private var isDateTimeSelected = true
 
     private var activityTypes: List<ActivityType> = emptyList()
 

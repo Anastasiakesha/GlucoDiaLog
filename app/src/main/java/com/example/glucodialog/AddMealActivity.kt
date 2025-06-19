@@ -36,7 +36,7 @@ class AddMealActivity : AppCompatActivity() {
     private var selectedFoodItem: FoodItem? = null
 
     private val calendar = Calendar.getInstance()
-    private var isDateTimeSelected = false
+    private var isDateTimeSelected = true
     private var icValue: Double? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {

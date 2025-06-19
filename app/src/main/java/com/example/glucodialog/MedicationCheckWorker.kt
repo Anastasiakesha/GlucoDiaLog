@@ -1,4 +1,4 @@
-package com.example.glucodialog.utils
+package com.example.glucodialog
 
 
 import android.content.Context

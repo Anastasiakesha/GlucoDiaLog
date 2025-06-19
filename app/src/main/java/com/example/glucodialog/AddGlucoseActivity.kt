@@ -28,7 +28,7 @@ class AddGlucoseActivity : AppCompatActivity() {
 
     private val calendar = Calendar.getInstance()
     private val scope = MainScope()
-    private var isDateTimeSelected = false
+    private var isDateTimeSelected = true
     private val units = listOf("ммоль/л", "мг/дл")
 
     private var userProfile: UserProfile? = null
@@ -102,21 +102,23 @@ class AddGlucoseActivity : AppCompatActivity() {
         scope.launch {
             userProfile = db.userProfileDao().getUserProfile().firstOrNull()
             runOnUiThread {
-                calculateCorrectionDose() // Пересчёт при загрузке профиля
+                calculateCorrectionDose()
             }
         }
     }
 
-    private fun calculateCorrectionDose() {
-        val glucoseText = etGlucoseValue.text.toString()
-        val selectedUnit = spinnerUnit.selectedItem.toString()
-        val profile = userProfile ?: run {
-            tvCorrectionDose.text = "Корректирующая доза: —"
-            return
-        }
+    private fun getNormalizedGlucoseInMmolL(): Double? {
+        val text = etGlucoseValue.text.toString()
+        val value = text.toDoubleOrNull() ?: return null
+        val unit = spinnerUnit.selectedItem.toString()
+        return if (unit == "мг/дл") value / 18.0 else value
+    }
 
-        val glucoseLevel = glucoseText.toDoubleOrNull()
-        if (glucoseLevel == null) {
+    private fun calculateCorrectionDose() {
+        val glucoseMmolL = getNormalizedGlucoseInMmolL()
+        val profile = userProfile
+
+        if (glucoseMmolL == null || profile == null) {
             tvCorrectionDose.text = "Корректирующая доза: —"
             return
         }
@@ -124,9 +126,9 @@ class AddGlucoseActivity : AppCompatActivity() {
         val tdd = profile.bolusDose + profile.basalDose
         val target = profile.targetGlucoseHigh
 
-        if (tdd > 0 && glucoseLevel > target) {
-            val isf = if (selectedUnit == "ммоль/л") 100 / tdd else 1800 / tdd
-            val excess = glucoseLevel - target
+        if (tdd > 0 && glucoseMmolL > target) {
+            val isf = 100 / tdd
+            val excess = glucoseMmolL - target
             val correctionDose = excess / isf
             tvCorrectionDose.text = "Корректирующая доза: %.1f ед.".format(correctionDose)
         } else {

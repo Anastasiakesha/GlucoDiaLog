@@ -3,8 +3,8 @@ package com.example.glucodialog.utils
 import android.content.Context
 import com.example.glucodialog.data.*
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.withContext
 import java.util.*
 
 object HealthAnalyzer {
@@ -19,28 +19,37 @@ object HealthAnalyzer {
         val insulinDao = db.insulinDao()
         val foodDao = db.foodDao()
         val activityDao = db.activityDao()
-        val medicationDao = db.medicationDao()
-        val userProfileDao = db.userProfileDao()
 
         val twoHoursMillis = 2 * 60 * 60 * 1000L
         val threeHoursMillis = 3 * 60 * 60 * 1000L
 
-        val oldEntries = glucoseDao.getAllGlucoseEntriesOnce().filter { it.timestamp < newEntry.timestamp }
+        val nowTimestamp = newEntry.timestamp
 
-        val prevEntry = oldEntries.maxByOrNull { it.timestamp }
+        // Получаем предыдущую запись глюкозы до текущей
+        val prevEntry = glucoseDao.getGlucoseEntriesBetween(0L, nowTimestamp - 1)
+            .maxByOrNull { it.timestamp }
 
-        val insulinBefore = insulinDao.getAllInsulinEntriesOnce()
-            .filter { it.timestamp in (newEntry.timestamp - threeHoursMillis)..(newEntry.timestamp - twoHoursMillis) }
+        // Инсулин за 2–3 часа до текущей записи
+        val insulinBefore = insulinDao.getInsulinEntriesBetween(
+            nowTimestamp - threeHoursMillis,
+            nowTimestamp - twoHoursMillis
+        )
 
-        val foodBefore = foodDao.getAllFoodEntriesOnce()
-            .filter { it.timestamp in (newEntry.timestamp - threeHoursMillis)..(newEntry.timestamp - twoHoursMillis) }
+        // Еда за 2–3 часа до текущей записи
+        val foodBefore = foodDao.getFoodEntriesBetween(
+            nowTimestamp - threeHoursMillis,
+            nowTimestamp - twoHoursMillis
+        )
 
-        val activityBefore = activityDao.getAllActivityEntriesOnce()
-            .filter { it.timestamp in (newEntry.timestamp - twoHoursMillis)..newEntry.timestamp }
+        // Активность за последние 2 часа
+        val activityBefore = activityDao.getActivitiesBetween(
+            nowTimestamp - twoHoursMillis,
+            nowTimestamp
+        )
 
         val warnings = mutableListOf<String>()
 
-        // Анализ изменения глюкозы относительно еды и инсулина
+        // Анализ повышения глюкозы при наличии еды и инсулина
         if (insulinBefore.isNotEmpty() && foodBefore.isNotEmpty() && prevEntry != null) {
             if (newEntry.glucoseLevel - prevEntry.glucoseLevel >= 2.0) {
                 warnings.add("Возможна недостаточная доза инсулина")
@@ -61,13 +70,10 @@ object HealthAnalyzer {
             }
         }
 
-        // Сохраняем предупреждения в note (комментарии) глюкозы
+        // Сохраняем предупреждение в note и отображаем уведомление
         if (warnings.isNotEmpty()) {
             val message = warnings.joinToString("\n")
-            val updatedEntry = newEntry.copy(note = message)
-            glucoseDao.updateNoteForEntry(updatedEntry.id, message)
-
-            // Показываем уведомления
+            glucoseDao.updateNoteForEntry(newEntry.id, message)
             Notifier.showNotification(context, "Анализ показателей", message)
         }
     }
@@ -78,9 +84,6 @@ object HealthAnalyzer {
 
         val userProfile = userProfileDao.getUserProfile().firstOrNull() ?: return@withContext
 
-        val medicationTypes = medicationDao.getAllMedicationTypes().firstOrNull() ?: emptyList()
-        val medicationTypeMap = medicationTypes.associateBy { it.id }
-
         val now = Calendar.getInstance()
         val todayStart = now.apply {
             set(Calendar.HOUR_OF_DAY, 0)
@@ -88,9 +91,10 @@ object HealthAnalyzer {
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
         }.timeInMillis
+        val nowMillis = System.currentTimeMillis()
 
-        val todayEntries = medicationDao.getAllMedicationEntriesOnce()
-            .filter { it.timestamp >= todayStart }
+        // Получаем записи лекарства за сегодня
+        val todayEntries = medicationDao.getMedicationEntriesBetween(todayStart, nowMillis)
 
         val warnings = mutableListOf<String>()
 

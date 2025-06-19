@@ -32,4 +32,8 @@ interface ActivityDao {
     @Query("SELECT * FROM activity_types WHERE LOWER(name) = LOWER(:name) LIMIT 1")
     suspend fun getActivityTypeByName(name: String): ActivityType?
 
+    @Query("SELECT * FROM activity_entries WHERE timestamp BETWEEN :startTimestamp AND :endTimestamp ORDER BY timestamp DESC")
+    suspend fun getActivitiesBetween(startTimestamp: Long, endTimestamp: Long): List<ActivityEntry>
+
+
 }

@@ -2,6 +2,8 @@ package com.example.glucodialog
 
 
 import android.os.Bundle
+import android.view.View
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -21,6 +23,7 @@ class ViewRecordsActivity : AppCompatActivity() {
         setContentView(R.layout.activity_view_records)
 
         val recyclerView = findViewById<RecyclerView>(R.id.recyclerViewRecords)
+        val tvEmptyMessage = findViewById<TextView>(R.id.tvEmptyMessage)
         recyclerView.layoutManager = LinearLayoutManager(this)
 
         val db = AppDatabase.getDatabase(this)
@@ -58,7 +61,6 @@ class ViewRecordsActivity : AppCompatActivity() {
                 }
             )
 
-
             val grouped = unifiedList
                 .sortedByDescending { it.getTimestamp() }
                 .groupBy { timestampToDate(it.getTimestamp()) }
@@ -66,7 +68,16 @@ class ViewRecordsActivity : AppCompatActivity() {
                     listOf(UnifiedEntry.DateHeader(date)) + entries
                 }
 
-            recyclerView.adapter = UnifiedEntryAdapter(grouped)
+            runOnUiThread {
+                if (grouped.isEmpty()) {
+                    recyclerView.visibility = View.GONE
+                    tvEmptyMessage.visibility = View.VISIBLE
+                } else {
+                    recyclerView.visibility = View.VISIBLE
+                    tvEmptyMessage.visibility = View.GONE
+                    recyclerView.adapter = UnifiedEntryAdapter(grouped)
+                }
+            }
         }
     }
 

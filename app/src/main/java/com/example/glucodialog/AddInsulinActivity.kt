@@ -23,7 +23,7 @@ class AddInsulinActivity : AppCompatActivity() {
 
     private val calendar = Calendar.getInstance()
     private val scope = MainScope()
-    private var isDateTimeSelected = false
+    private var isDateTimeSelected = true
 
     private var insulinTypes: List<InsulinType> = emptyList()
     private val unitOptions = listOf("Ед", "Ед/ч")

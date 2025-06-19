@@ -32,4 +32,7 @@ interface MedicationDao {
     @Query("SELECT * FROM medication_types WHERE LOWER(name) = LOWER(:name) LIMIT 1")
     suspend fun getMedicationTypeByName(name: String): MedicationType?
 
+    @Query("SELECT * FROM medication_entries WHERE timestamp BETWEEN :startTimestamp AND :endTimestamp ORDER BY timestamp DESC")
+    suspend fun getMedicationEntriesBetween(startTimestamp: Long, endTimestamp: Long): List<MedicationEntry>
+
 }

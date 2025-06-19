@@ -22,7 +22,7 @@ class GlucoseStatsActivity : AppCompatActivity() {
     private lateinit var tvMinMax: TextView
     private lateinit var chart: LineChart
     private lateinit var tvHbA1c: TextView
-
+    private lateinit var tvMessage: TextView
 
     private val scope = MainScope()
 
@@ -35,6 +35,7 @@ class GlucoseStatsActivity : AppCompatActivity() {
         tvMinMax = findViewById(R.id.tvMinMax)
         chart = findViewById(R.id.glucoseChart)
         tvHbA1c = findViewById(R.id.tvHbA1c)
+        tvMessage = findViewById(R.id.tvMessage)
 
         observeGlucoseData()
     }
@@ -44,18 +45,55 @@ class GlucoseStatsActivity : AppCompatActivity() {
 
         scope.launch {
             db.glucoseDao().getAllGlucoseEntries().collect { entries ->
-                if (entries.isNotEmpty()) {
-                    updateStats(entries)
-                    updateChart(entries)
+                runOnUiThread {
+                    when {
+                        entries.isEmpty() -> {
+                            showMessage("Нет записей о глюкозе")
+                        }
+
+                        entries.size < 3 -> {
+                            showMessage("Недостаточно данных для отображения статистики (минимум 3 записи)")
+                        }
+
+                        else -> {
+                            // Достаточно данных
+                            tvMessage.visibility = TextView.GONE
+                            chart.visibility = LineChart.VISIBLE
+                            tvAverage.visibility = TextView.VISIBLE
+                            tvMinMax.visibility = TextView.VISIBLE
+                            tvDailyCount.visibility = TextView.VISIBLE
+                            tvHbA1c.visibility = TextView.VISIBLE
+
+                            updateStats(entries)
+                            updateChart(entries)
+                        }
+                    }
                 }
             }
         }
     }
 
+    private fun showMessage(message: String) {
+        tvMessage.text = message
+        tvMessage.visibility = TextView.VISIBLE
+
+        chart.visibility = LineChart.GONE
+        tvAverage.visibility = TextView.GONE
+        tvMinMax.visibility = TextView.GONE
+        tvDailyCount.visibility = TextView.GONE
+        tvHbA1c.visibility = TextView.GONE
+    }
+
+    private fun normalize(entry: GlucoseEntry): Double {
+        return if (entry.unit == "мг/дл") entry.glucoseLevel / 18.0 else entry.glucoseLevel
+    }
+
     private fun updateStats(entries: List<GlucoseEntry>) {
-        val avg = entries.map { it.glucoseLevel }.average()
-        val min = entries.minByOrNull { it.glucoseLevel }?.glucoseLevel
-        val max = entries.maxByOrNull { it.glucoseLevel }?.glucoseLevel
+        val mmolEntries = entries.map { normalize(it) }
+
+        val avg = mmolEntries.average()
+        val min = mmolEntries.minOrNull()
+        val max = mmolEntries.maxOrNull()
 
         val measurementsPerDay = entries.groupBy {
             val calendar = Calendar.getInstance()
@@ -64,24 +102,23 @@ class GlucoseStatsActivity : AppCompatActivity() {
         }.mapValues { it.value.size }
 
         val avgDaily = measurementsPerDay.values.average()
+        val estimatedHbA1c = (avg + 2.59) / 1.59  // Формула в ммоль/л
 
-        val estimatedHbA1c = (avg + 2.52) / 1.59
-
-        tvAverage.text = "Среднее: %.2f ммоль/л".format(avg)
+        tvAverage.text = "Средняя: %.2f ммоль/л".format(avg)
         tvMinMax.text = "Мин/Макс: %.1f / %.1f".format(min ?: 0.0, max ?: 0.0)
         tvDailyCount.text = "Измерений в день: %.1f".format(avgDaily)
         tvHbA1c.text = "HbA1c: %.2f %%".format(estimatedHbA1c)
     }
 
-
     private fun updateChart(entries: List<GlucoseEntry>) {
         val sorted = entries.sortedBy { it.timestamp }
 
         val entriesLine = sorted.mapIndexed { index, entry ->
-            Entry(index.toFloat(), entry.glucoseLevel.toFloat())
+            val valueMmol = normalize(entry).toFloat()
+            Entry(index.toFloat(), valueMmol)
         }
 
-        val dataSet = LineDataSet(entriesLine, "Глюкоза").apply {
+        val dataSet = LineDataSet(entriesLine, "Глюкоза (ммоль/л)").apply {
             color = getColor(com.google.android.material.R.color.material_dynamic_tertiary60)
             setDrawCircles(true)
             setDrawValues(false)
@@ -103,6 +140,7 @@ class GlucoseStatsActivity : AppCompatActivity() {
                 } else ""
             }
         }
+        chart.description.isEnabled = false
 
         chart.invalidate()
     }

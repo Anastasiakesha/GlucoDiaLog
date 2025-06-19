@@ -5,6 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+
     <TextView android:id="@+id/tvAverage"
         android:text="Среднее: -"
         android:layout_width="wrap_content"
@@ -33,4 +34,16 @@
         android:layout_height="300dp"
         android:layout_marginTop="16dp"
         tools:ignore="MissingClass" />
+
+    <TextView
+        android:id="@+id/tvMessage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Сообщение"
+        android:textSize="16sp"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:visibility="gone"
+        android:textColor="@android:color/darker_gray" />
+
 </LinearLayout>

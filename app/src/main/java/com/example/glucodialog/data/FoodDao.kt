@@ -32,4 +32,7 @@ interface FoodDao {
     @Query("SELECT * FROM food_items WHERE LOWER(name) = LOWER(:name) LIMIT 1")
     suspend fun getFoodItemByName(name: String): FoodItem?
 
+    @Query("SELECT * FROM food_entries WHERE timestamp BETWEEN :startTimestamp AND :endTimestamp ORDER BY timestamp DESC")
+    suspend fun getFoodEntriesBetween(startTimestamp: Long, endTimestamp: Long): List<FoodEntry>
+
 }

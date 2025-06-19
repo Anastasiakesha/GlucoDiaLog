@@ -24,7 +24,7 @@ class AddMedicationActivity : AppCompatActivity() {
 
     private val calendar = Calendar.getInstance()
     private val scope = MainScope()
-    private var isDateTimeSelected = false
+    private var isDateTimeSelected = true
 
     private var medicationTypes: List<MedicationType> = emptyList()
 
