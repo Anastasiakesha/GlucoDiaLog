@@ -35,4 +35,17 @@ interface InsulinDao {
     @Query("SELECT * FROM insulin_entries WHERE timestamp BETWEEN :startTimestamp AND :endTimestamp ORDER BY timestamp DESC")
     suspend fun getInsulinEntriesBetween(startTimestamp: Long, endTimestamp: Long): List<InsulinEntry>
 
+    @Transaction
+    @Query("SELECT * FROM insulin_entries ORDER BY timestamp DESC")
+    fun getAllInsulinEntriesWithTypesFlow(): Flow<List<InsulinEntryWithType>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertInsulinType(type: InsulinType)
+
+    @Update
+    suspend fun updateInsulinEntry(entry: InsulinEntry)
+
+    @Delete
+    suspend fun deleteInsulinEntry(entry: InsulinEntry)
+
 }

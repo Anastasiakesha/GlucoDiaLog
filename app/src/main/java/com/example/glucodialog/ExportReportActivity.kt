@@ -11,15 +11,8 @@ import com.example.glucodialog.utils.ExcelExporter
 import kotlinx.coroutines.launch
 
 class ExportReportActivity : AppCompatActivity() {
-    private lateinit var progressBar: ProgressBar
-    private lateinit var tvExporting: TextView
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_export_report)
-
-        progressBar = findViewById(R.id.progressBar)
-        tvExporting = findViewById(R.id.tvExporting)
 
 
         lifecycleScope.launch {
@@ -28,7 +21,7 @@ class ExportReportActivity : AppCompatActivity() {
                 AppDatabase.getDatabase(this@ExportReportActivity)
             )
 
-            Toast.makeText(this@ExportReportActivity, "Экспорт завершён", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this@ExportReportActivity, "Экспорт в xls завершён", Toast.LENGTH_SHORT).show()
             finish()
         }
     }

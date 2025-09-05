@@ -22,7 +22,15 @@ workRuntimeKtx = "2.10.1"
 espresso= "3.6.1"
 androidx-test-runner = "1.5.2"
 androidx-test-rules = "1.5.0"
-
+runtime = "1.9.0"
+composeBom = "2024.06.00"
+kotlinCompilerExtension = "1.5.14"
+foundation = "1.9.0"
+composeNavigation = "1.5.0"
+navigationCompose = "2.9.3"
+animationCore = "1.9.0"
+uiText = "1.9.0"
+ui = "1.9.0"
 
 
 [libraries]
@@ -50,7 +58,20 @@ androidx-test-runner={ module="androidx.test:runner", version.ref="androidx-test
 androidx-test-rules={module="androidx.test:rules", version.ref="androidx-test-rules"}
 espresso-contrib = {module="androidx.test.espresso:espresso-contrib", version.ref="espresso"}
 espresso-intents = {module="androidx.test.espresso:espresso-intents", version.ref="espresso"}
-
+androidx-runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "runtime" }
+compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
+compose-ui = { module = "androidx.compose.ui:ui" }
+compose-material3 = { module = "androidx.compose.material3:material3" }
+compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
+compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
+lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose" }
+activity-compose = { module = "androidx.activity:activity-compose" }
+androidx-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundation" }
+androidx-compose-navigation = { group = "androidx.wear.compose", name = "compose-navigation", version.ref = "composeNavigation" }
+androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
+androidx-animation-core = { group = "androidx.compose.animation", name = "animation-core", version.ref = "animationCore" }
+androidx-ui-text = { group = "androidx.compose.ui", name = "ui-text", version.ref = "uiText" }
+androidx-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "ui" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -1,138 +1,35 @@
 package com.example.glucodialog
 
 import android.os.Bundle
-import android.widget.*
-import androidx.appcompat.app.AppCompatActivity
+import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import com.example.glucodialog.data.AppDatabase
-import com.example.glucodialog.data.InsulinEntry
-import com.example.glucodialog.data.InsulinType
-import com.example.glucodialog.utils.DateTimeHelper
+import com.example.glucodialog.ui.GlucoseEntryScreen
+import com.example.glucodialog.ui.InsulinEntryScreen
 import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
-import java.util.*
 
-class AddInsulinActivity : AppCompatActivity() {
-
-    private lateinit var spinnerInsulinType: Spinner
-    private lateinit var etInsulinDose: EditText
-    private lateinit var spinnerUnit: Spinner
-    private lateinit var tvSelectedTime: TextView
-    private lateinit var btnPickTime: Button
-    private lateinit var btnSave: Button
-
-    private val calendar = Calendar.getInstance()
+class AddInsulinActivity : ComponentActivity() {
     private val scope = MainScope()
-    private var isDateTimeSelected = true
-
-    private var insulinTypes: List<InsulinType> = emptyList()
-    private val unitOptions = listOf("Ед", "Ед/ч")
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_add_insulin)
 
-        // Инициализация UI
-        spinnerInsulinType = findViewById(R.id.spinnerInsulinType)
-        etInsulinDose = findViewById(R.id.etInsulinDose)
-        spinnerUnit = findViewById(R.id.spinnerUnit)
-        tvSelectedTime = findViewById(R.id.tvSelectedTime)
-        btnPickTime = findViewById(R.id.btnPickInsulinTime)
-        btnSave = findViewById(R.id.btnSaveInsulin)
-
-        // Настройка спиннера единиц
-        val unitAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, unitOptions)
-        spinnerUnit.adapter = unitAdapter
-
-        updateDateTimeDisplay()
-
-        btnPickTime.setOnClickListener {
-            showDateTimePicker()
-        }
-
-        btnSave.setOnClickListener {
-            saveInsulinEntryToDatabase()
-        }
-
-        loadInsulinTypes()
-    }
-
-    private fun loadInsulinTypes() {
         val db = AppDatabase.getDatabase(this)
 
         scope.launch {
-            insulinTypes = db.insulinDao().getAllInsulinTypes().first()
+            val userProfile = db.userProfileDao().getUserProfile().firstOrNull()
+            val insulinDao = db.insulinDao()
 
             runOnUiThread {
-                if (insulinTypes.isEmpty()) {
-                    Toast.makeText(this@AddInsulinActivity, "Нет доступных типов инсулина", Toast.LENGTH_LONG).show()
-                    finish()
-                    return@runOnUiThread
+                setContent {
+                    InsulinEntryScreen(
+                        userProfile = userProfile,
+                        insulinDao = insulinDao,
+                        onBack = { finish() }
+                    )
                 }
-
-                val adapter = ArrayAdapter(
-                    this@AddInsulinActivity,
-                    android.R.layout.simple_spinner_dropdown_item,
-                    insulinTypes.map { it.name }
-                )
-                spinnerInsulinType.adapter = adapter
-            }
-        }
-    }
-
-    private fun showDateTimePicker() {
-        DateTimeHelper.showDateTimePicker(this, calendar) { selectedCalendar ->
-            calendar.timeInMillis = selectedCalendar.timeInMillis
-            isDateTimeSelected = true
-            updateDateTimeDisplay()
-        }
-    }
-
-    private fun updateDateTimeDisplay() {
-        tvSelectedTime.text = DateTimeHelper.formatDateTime(calendar)
-    }
-
-    private fun saveInsulinEntryToDatabase() {
-        val doseText = etInsulinDose.text.toString()
-
-        if (doseText.isBlank()) {
-            Toast.makeText(this, "Введите дозу инсулина", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val dose = doseText.toDoubleOrNull()
-        if (dose == null || dose <= 0.0) {
-            Toast.makeText(this, "Некорректное значение дозы", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        if (!isDateTimeSelected) {
-            Toast.makeText(this, "Выберите дату и время", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val selectedIndex = spinnerInsulinType.selectedItemPosition
-        if (selectedIndex !in insulinTypes.indices) {
-            Toast.makeText(this, "Некорректный выбор типа инсулина", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val selectedType = insulinTypes[selectedIndex]
-        val selectedUnit = spinnerUnit.selectedItem.toString()
-
-        val entry = InsulinEntry(
-            insulinTypeId = selectedType.id,
-            doseUnits = dose,
-            unit = selectedUnit,
-            timestamp = calendar.timeInMillis
-        )
-
-        val db = AppDatabase.getDatabase(this)
-        scope.launch {
-            db.insulinDao().insertInsulinEntry(entry)
-            runOnUiThread {
-                Toast.makeText(this@AddInsulinActivity, "Инсулин сохранён", Toast.LENGTH_SHORT).show()
-                finish()
             }
         }
     }

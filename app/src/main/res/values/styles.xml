@@ -1,24 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="PrimaryButtonStyle" parent="Widget.MaterialComponents.Button.OutlinedButton">
-        <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_marginTop">12dp</item>
+
+    <!-- Основная тема приложения -->
+    <style name="Theme.GlucoDialog" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <!-- Основные цвета -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryVariant">@color/colorPrimaryVariant</item>
+        <item name="colorSecondary">@color/colorSecondary</item>
+
+        <!-- Цвета текста -->
+        <item name="colorOnPrimary">@color/colorOnPrimary</item>
+        <item name="colorOnSecondary">@color/colorOnSecondary</item>
+
+        <!-- Статус бар и навигация -->
+        <item name="android:statusBarColor">@color/colorPrimaryVariant</item>
+        <item name="android:navigationBarColor">@color/colorPrimary</item>
     </style>
 
-    <style name="OutlinedEditText" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-        <item name="boxBackgroundColor">@android:color/white</item>
-    </style>
-
-    <style name="DefaultSpinner">
-        <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_marginTop">12dp</item>
-    </style>
-
-    <style name="SectionLabel">
-        <item name="android:textColor">#000000</item>
-        <item name="android:textSize">16sp</item>
-        <item name="android:layout_marginTop">16dp</item>
-    </style>
 </resources>

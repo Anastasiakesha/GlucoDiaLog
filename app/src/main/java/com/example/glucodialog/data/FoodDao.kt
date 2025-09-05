@@ -35,4 +35,17 @@ interface FoodDao {
     @Query("SELECT * FROM food_entries WHERE timestamp BETWEEN :startTimestamp AND :endTimestamp ORDER BY timestamp DESC")
     suspend fun getFoodEntriesBetween(startTimestamp: Long, endTimestamp: Long): List<FoodEntry>
 
+    @Transaction
+    @Query("SELECT * FROM food_entries ORDER BY timestamp DESC")
+    fun getAllFoodEntriesWithItemsFlow(): Flow<List<FoodEntryWithItem>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertFoodItem(type: FoodItem)
+
+    @Update
+    suspend fun updateFoodEntry(entry: FoodEntry)
+
+    @Delete
+    suspend fun deleteFoodEntry(entry: FoodEntry)
+
 }

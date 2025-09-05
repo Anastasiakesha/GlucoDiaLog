@@ -35,5 +35,17 @@ interface ActivityDao {
     @Query("SELECT * FROM activity_entries WHERE timestamp BETWEEN :startTimestamp AND :endTimestamp ORDER BY timestamp DESC")
     suspend fun getActivitiesBetween(startTimestamp: Long, endTimestamp: Long): List<ActivityEntry>
 
+    @Transaction
+    @Query("SELECT * FROM activity_entries ORDER BY timestamp DESC")
+    fun getAllActivityEntriesWithTypesFlow(): Flow<List<ActivityEntryWithType>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertActivityType(type: ActivityType)
+
+    @Update
+    suspend fun updateActivityEntry(entry: ActivityEntry)
+
+    @Delete
+    suspend fun deleteActivityEntry(entry: ActivityEntry)
 
 }

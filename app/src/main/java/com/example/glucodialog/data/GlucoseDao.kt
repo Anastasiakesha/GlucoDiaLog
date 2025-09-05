@@ -21,5 +21,11 @@ interface GlucoseDao {
     @Query("SELECT * FROM glucose_entries WHERE timestamp BETWEEN :startTimestamp AND :endTimestamp ORDER BY timestamp DESC")
     suspend fun getGlucoseEntriesBetween(startTimestamp: Long, endTimestamp: Long): List<GlucoseEntry>
 
+    @Update
+    suspend fun updateGlucoseEntry(entry: GlucoseEntry)
+
+    @Delete
+    suspend fun deleteGlucoseEntry(entry: GlucoseEntry)
+
 
 }
