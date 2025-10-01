@@ -1,35 +1,58 @@
 package com.example.glucodialog
 
 import android.os.Bundle
-import android.widget.*
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import com.example.glucodialog.data.AppDatabase
-import com.example.glucodialog.ui.MealEntryScreen
-import com.example.glucodialog.ui.MedicationEntryScreen
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.launch
+import com.example.glucodialog.domain.repository.FoodRepositoryImpl
+import com.example.glucodialog.domain.usecase.food.*
+import com.example.glucodialog.ui.screen.MealEntryScreen
+import com.example.glucodialog.ui.viewmodel.FoodViewModel
+import com.example.glucodialog.ui.viewmodel.FoodViewModelFactory
+import  com.example.glucodialog.ui.viewmodel.MainViewModel
 
 class AddMealActivity : AppCompatActivity() {
-    private val scope = MainScope()
+    private val mainViewModel: MainViewModel by viewModels {
+        MainViewModel.MainViewModelFactory(
+            AppDatabase.getDatabase(this).userProfileDao()
+        )
+    }
+    private val viewModel: FoodViewModel by viewModels {
+        val db = AppDatabase.getDatabase(this)
+
+        val foodRepository = FoodRepositoryImpl(db.foodDao())
+
+
+        FoodViewModelFactory(
+            insertFoodEntryUseCase = InsertFoodEntryUseCase(foodRepository),
+            updateFoodEntryUseCase = UpdateFoodEntryUseCase(foodRepository),
+            deleteFoodEntryUseCase = DeleteFoodEntryUseCase(foodRepository),
+            getAllFoodEntriesUseCase = GetAllFoodEntriesUseCase(foodRepository),
+            getAllFoodEntriesOnceUseCase = GetAllFoodEntriesOnceUseCase(foodRepository),
+            getAllFoodEntriesWithTypesUseCase = GetAllFoodEntriesWithTypesUseCase(foodRepository),
+            getAllFoodEntriesWithTypesOnceUseCase = GetAllFoodEntriesWithTypesOnceUseCase(foodRepository),
+            getFoodEntriesBetweenUseCase = GetFoodEntriesBetweenUseCase(foodRepository),
+            getAllFoodTypesUseCase = GetAllFoodTypesUseCase(foodRepository),
+            insertFoodTypeUseCase = InsertFoodTypeUseCase(foodRepository),
+            insertAllFoodTypesUseCase = InsertAllFoodTypesUseCase(foodRepository),
+            getFoodTypeByIdUseCase = GetFoodTypeByIdUseCase(foodRepository),
+            getFoodTypeByNameUseCase = GetFoodTypeByNameUseCase(foodRepository),
+        )
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setContent {
+            val userProfile by mainViewModel.userProfile.collectAsState(initial = null)
 
-        val db = AppDatabase.getDatabase(this)
-        scope.launch {
-            val userProfile = db.userProfileDao().getUserProfile().firstOrNull()
-            val foodDao = db.foodDao()
-
-            runOnUiThread {
-                setContent {
-                    MealEntryScreen(
-                        userProfile = userProfile,
-                        foodDao = foodDao,
-                        onBack = { finish() }
-                    )
-                }
-            }
+            MealEntryScreen(
+                viewModel = viewModel,
+                onBack = { finish() },
+                userProfile = userProfile
+            )
         }
     }
 }

@@ -66,13 +66,11 @@ object PdfExporter {
                 canvas = checkPageSpace()
                 var x = xStart
 
-                // Фон для строки
                 if (!isHeader && type != null) {
                     backgroundPaint.color = typeColors[type] ?: Color.WHITE
                     canvas.drawRect(xStart - 5f, yPosition - 15f, xStart + row.size * 100f, yPosition + 5f, backgroundPaint)
                 }
 
-                // Текст
                 val paintToUse = if (isHeader) headerPaint else defaultPaint
                 row.forEach { cell ->
                     canvas.drawText(cell, x, yPosition, paintToUse)
@@ -82,7 +80,6 @@ object PdfExporter {
                 yPosition += rowHeight
             }
 
-            // Заголовки колонок
             val headers = listOf(
                 "Тип записи", "Дата", "Название",
                 "Кол-во", "Ед", "Предупреждения",
@@ -90,29 +87,26 @@ object PdfExporter {
             )
             drawRow(headers, isHeader = true)
 
-            // === Сбор всех записей с датой ===
             val allEntries = mutableListOf<Triple<Long, List<String>, String>>() // Triple<timestamp, row, type>
 
             db.glucoseDao().getAllGlucoseEntriesOnce().forEach {
                 allEntries.add(Triple(it.timestamp, listOf("Глюкоза", dateTimeFormat.format(Date(it.timestamp)), "", it.glucoseLevel.toString(), it.unit, it.note.toString(), "", "", "", ""), "Глюкоза"))
             }
             db.insulinDao().getAllInsulinEntriesOnceWithTypes().forEach {
-                allEntries.add(Triple(it.entry.timestamp, listOf("Инсулин", dateTimeFormat.format(Date(it.entry.timestamp)), it.type.name, it.entry.doseUnits.toString(), it.entry.unit, "", "", "", "", ""), "Инсулин"))
+                allEntries.add(Triple(it.entry.timestamp, listOf("Инсулин", dateTimeFormat.format(Date(it.entry.timestamp)), it.type?.name ?: "", it.entry.doseUnits.toString(), it.entry.unit, "", "", "", "", ""), "Инсулин"))
             }
             db.medicationDao().getAllMedicationEntriesOnceWithTypes().forEach {
-                allEntries.add(Triple(it.entry.timestamp, listOf("Лекарство", dateTimeFormat.format(Date(it.entry.timestamp)), it.type.name, it.entry.dose, it.entry.unit, "", "", "", "", ""), "Лекарство"))
+                allEntries.add(Triple(it.entry.timestamp, listOf("Лекарство", dateTimeFormat.format(Date(it.entry.timestamp)), it.type?.name ?: "", it.entry.dose, it.entry.unit, "", "", "", "", ""), "Лекарство"))
             }
             db.activityDao().getAllActivityEntriesOnceWithTypes().forEach {
-                allEntries.add(Triple(it.entry.timestamp, listOf("Активность", dateTimeFormat.format(Date(it.entry.timestamp)), it.type.name, it.entry.durationMinutes.toString(), "мин", "", "", "", "", ""), "Активность"))
+                allEntries.add(Triple(it.entry.timestamp, listOf("Активность", dateTimeFormat.format(Date(it.entry.timestamp)), it.type?.name ?: "", it.entry.durationMinutes.toString(), "мин", "", "", "", "", ""), "Активность"))
             }
             db.foodDao().getAllFoodEntriesOnceWithItems().forEach {
-                allEntries.add(Triple(it.entry.timestamp, listOf("Питание", dateTimeFormat.format(Date(it.entry.timestamp)), it.foodItem.name, it.entry.quantity.toString(), it.entry.unit, "", it.foodItem.carbs.toString(), it.foodItem.calories.toString(), it.foodItem.proteins.toString(), it.foodItem.fats.toString()), "Питание"))
+                allEntries.add(Triple(it.entry.timestamp, listOf("Питание", dateTimeFormat.format(Date(it.entry.timestamp)), it.foodItem?.name ?: "", it.entry.quantity.toString(), it.entry.unit, "", it.foodItem?.carbs.toString(), it.foodItem?.calories.toString(), it.foodItem?.proteins.toString(), it.foodItem?.fats.toString()), "Питание"))
             }
 
-            // Сортировка по дате (новые сверху)
             allEntries.sortByDescending { it.first }
 
-            // Рисуем записи с разделением по дате
             var currentDate = ""
             allEntries.forEach { (timestamp, row, type) ->
                 val rowDate = dateOnlyFormat.format(Date(timestamp))

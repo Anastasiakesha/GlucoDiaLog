@@ -5,6 +5,11 @@ import android.net.Uri
 import android.util.Log
 import android.widget.Toast
 import com.example.glucodialog.data.*
+import com.example.glucodialog.data.local.ActivityEntry
+import com.example.glucodialog.data.local.FoodEntry
+import com.example.glucodialog.data.local.GlucoseEntry
+import com.example.glucodialog.data.local.InsulinEntry
+import com.example.glucodialog.data.local.MedicationEntry
 import jxl.Workbook
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

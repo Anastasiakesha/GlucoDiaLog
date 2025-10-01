@@ -1,2 +1,18 @@
-package com.example.glucodialog.utils 
+package com.example.glucodialog.utils
 
+import android.content.Context
+import androidx.work.CoroutineWorker
+import androidx.work.WorkerParameters
+import com.example.glucodialog.data.AppDatabase
+
+class MedicationCheckWorker(
+    private val context: Context,
+    workerParams: WorkerParameters
+) : CoroutineWorker(context, workerParams) {
+
+    override suspend fun doWork(): Result {
+        val db = AppDatabase.Companion.getDatabase(context)
+        HealthAnalyzer.checkMedicationCompliance(context, db)
+        return Result.success()
+    }
+}

@@ -1,5 +1,4 @@
 
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
@@ -69,10 +68,13 @@ dependencies {
     implementation(libs.androidx.animation.core)
     implementation(libs.androidx.ui.text)
     implementation(libs.androidx.ui)
+    implementation(libs.foundation)
+    implementation(libs.ui)
+    implementation(libs.runtime)
+    implementation(libs.ui.text)
+    implementation(libs.room.ktx)
+    implementation(libs.androidx.ui.graphics)
     testImplementation(libs.junit)
-    testImplementation(libs.mockito.core)
-    testImplementation(libs.mockito.inline)
-    testImplementation(libs.mockito.kotlin)
     testImplementation(kotlin("test"))
     kapt(libs.androidx.room.compiler)
     androidTestImplementation(libs.androidx.junit)
@@ -87,6 +89,7 @@ dependencies {
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.lifecycle.runtime.compose)
     implementation(libs.activity.compose)
+    implementation("androidx.compose.material:material-icons-extended:1.6.0")
 
     debugImplementation(libs.compose.ui.tooling)
 

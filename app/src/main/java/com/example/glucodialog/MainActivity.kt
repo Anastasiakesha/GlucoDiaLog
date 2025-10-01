@@ -1,43 +1,59 @@
 package com.example.glucodialog
 
 import android.os.Bundle
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Apps
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.navigation.compose.NavHost
-import com.example.glucodialog.data.*
-import com.example.glucodialog.data.relations.*
-import com.example.glucodialog.ui.ProfileForm
-import com.example.glucodialog.ui.RecordHistory
-import com.example.glucodialog.ui.RecordTypeSelector
-import com.example.glucodialog.ui.screens.Dashboard
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.*
-import com.example.glucodialog.ui.GlucoseEntryScreen
-import com.example.glucodialog.ui.ProfileView
-import com.example.glucodialog.ui.Routes
+import com.example.glucodialog.data.AppDatabase
+import com.example.glucodialog.domain.model.ActivityEntryWithTypeDomain
+import com.example.glucodialog.domain.model.FoodEntryWithTypeDomain
+import com.example.glucodialog.domain.model.InsulinEntryWithTypeDomain
+import com.example.glucodialog.domain.model.MedicationEntryWithTypeDomain
+import com.example.glucodialog.domain.model.UserProfile
+import com.example.glucodialog.domain.repository.ActivityRepositoryImpl
+import com.example.glucodialog.domain.repository.FoodRepositoryImpl
+import com.example.glucodialog.domain.repository.GlucoseRepositoryImpl
+import com.example.glucodialog.domain.repository.InsulinRepositoryImpl
+import com.example.glucodialog.domain.repository.MedicationRepositoryImpl
+import com.example.glucodialog.domain.usecase.activity.*
+import com.example.glucodialog.domain.usecase.food.*
+import com.example.glucodialog.domain.usecase.medication.*
+import com.example.glucodialog.domain.usecase.glucose.*
+import com.example.glucodialog.domain.usecase.insulin.*
 import com.example.glucodialog.ui.components.BottomNavigationBar
+import com.example.glucodialog.ui.screen.*
+import com.example.glucodialog.ui.screens.Dashboard
+import com.example.glucodialog.ui.theme.GlucoDialogTheme
+import com.example.glucodialog.ui.viewmodel.ActivityEntryViewModel
+import com.example.glucodialog.ui.viewmodel.ActivityEntryViewModelFactory
+import com.example.glucodialog.ui.viewmodel.FoodViewModel
+import com.example.glucodialog.ui.viewmodel.FoodViewModelFactory
+import com.example.glucodialog.ui.viewmodel.GlucoseViewModel
+import com.example.glucodialog.ui.viewmodel.GlucoseViewModelFactory
+import com.example.glucodialog.ui.viewmodel.InsulinViewModel
+import com.example.glucodialog.ui.viewmodel.InsulinViewModelFactory
+import com.example.glucodialog.ui.viewmodel.MainViewModel
+import com.example.glucodialog.ui.viewmodel.MainViewModel.MainViewModelFactory
+import com.example.glucodialog.ui.viewmodel.MedicationViewModel
+import com.example.glucodialog.ui.viewmodel.MedicationViewModelFactory
 
-import androidx.compose.ui.platform.LocalContext
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import com.example.glucodialog.data.*
-import com.example.glucodialog.data.relations.*
-import com.example.glucodialog.ui.*
-import kotlinx.coroutines.flow.firstOrNull
 
-class MainActivity : AppCompatActivity() {
-
-    private val db by lazy { AppDatabase.getDatabase(this) }
-    private val scope = MainScope()
+class MainActivity : ComponentActivity() {
 
     object Routes {
         const val DASHBOARD = "dashboard"
@@ -56,250 +72,487 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        setContent {
-            var userProfile by remember { mutableStateOf<UserProfile?>(null) }
-            var isLoading by remember { mutableStateOf(true) }
+        val db = AppDatabase.getDatabase(this)
+        setContent{
+            GlucoDialogTheme {
+                val viewModel: MainViewModel = viewModel(
+                    factory = MainViewModelFactory(db.userProfileDao())
+                )
 
-            val glucoseEntries by db.glucoseDao().getAllGlucoseEntries().collectAsState(initial = emptyList())
-            val foodEntriesWithItems by db.foodDao().getAllFoodEntriesWithItemsFlow().collectAsState(initial = emptyList())
-            val insulinEntriesWithTypes by db.insulinDao().getAllInsulinEntriesWithTypesFlow().collectAsState(initial = emptyList())
-            val activityEntriesWithTypes by db.activityDao().getAllActivityEntriesWithTypesFlow().collectAsState(initial = emptyList())
-            val medicationEntriesWithTypes by db.medicationDao().getAllMedicationEntriesWithTypesFlow().collectAsState(initial = emptyList())
+                val userProfile by viewModel.userProfile.collectAsState()
+                val isLoading by viewModel.isLoading.collectAsState()
 
-            LaunchedEffect(Unit) {
-                userProfile = db.userProfileDao().getUserProfile().firstOrNull()
-                isLoading = false
-            }
-
-            val navController = rememberNavController()
-
-            Scaffold(
-                topBar = {
-                    val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
-                    TopAppBar(
-                        title = {
-                            Column {
-                                Text(
-                                    when (currentRoute) {
-                                        Routes.DASHBOARD -> "📊 Панель управления"
-                                        Routes.PROFILE -> "👤 Профиль"
-                                        Routes.PROFILE_FORM -> "✏️ Редактирование профиля"
-                                        Routes.RECORD_SELECTOR -> "➕ Добавить запись"
-                                        Routes.RECORD_HISTORY -> "📜 История записей"
-                                        else -> "💊 GlucoDiaLog"
-                                    },
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                                Text(
-                                    when (currentRoute) {
-                                        Routes.DASHBOARD -> "Обзор ваших показателей"
-                                        Routes.PROFILE -> "Просмотр информации о пользователе"
-                                        Routes.PROFILE_FORM -> "Заполните или измените данные профиля"
-                                        Routes.RECORD_SELECTOR -> "Выберите тип записи для добавления"
-                                        Routes.RECORD_HISTORY -> "История всех записей"
-                                        else -> ""
-                                    },
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            }
-                        },
-                        colors = TopAppBarDefaults.smallTopAppBarColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer
+                val foodRepository = FoodRepositoryImpl(db.foodDao())
+                val foodViewModel: FoodViewModel = viewModel(
+                    factory = FoodViewModelFactory(
+                        insertFoodEntryUseCase = InsertFoodEntryUseCase(
+                            foodRepository
+                        ),
+                        updateFoodEntryUseCase = UpdateFoodEntryUseCase(
+                            foodRepository
+                        ),
+                        deleteFoodEntryUseCase = DeleteFoodEntryUseCase(
+                            foodRepository
+                        ),
+                        getAllFoodEntriesUseCase = GetAllFoodEntriesUseCase(
+                            foodRepository
+                        ),
+                        getAllFoodEntriesOnceUseCase = GetAllFoodEntriesOnceUseCase(
+                            foodRepository
+                        ),
+                        getAllFoodEntriesWithTypesUseCase = GetAllFoodEntriesWithTypesUseCase(
+                            foodRepository
+                        ),
+                        getAllFoodEntriesWithTypesOnceUseCase = GetAllFoodEntriesWithTypesOnceUseCase(
+                            foodRepository
+                        ),
+                        getFoodEntriesBetweenUseCase = GetFoodEntriesBetweenUseCase(
+                            foodRepository
+                        ),
+                        getAllFoodTypesUseCase = GetAllFoodTypesUseCase(
+                            foodRepository
+                        ),
+                        insertFoodTypeUseCase = InsertFoodTypeUseCase(
+                            foodRepository
+                        ),
+                        insertAllFoodTypesUseCase = InsertAllFoodTypesUseCase(
+                            foodRepository
+                        ),
+                        getFoodTypeByIdUseCase = GetFoodTypeByIdUseCase(
+                            foodRepository
+                        ),
+                        getFoodTypeByNameUseCase = GetFoodTypeByNameUseCase(
+                            foodRepository
                         )
                     )
-                },
-                bottomBar = {
-                    if (userProfile != null) {
-                        BottomNavigationBar(navController = navController)
-                    }
-                }
-            ) { innerPadding ->
-                Box(
-                    modifier = Modifier
-                        .padding(innerPadding)
-                        .fillMaxSize()
-                ) {
+                )
+                val meals by foodViewModel.foodEntries.collectAsState()
+                val foodItems by foodViewModel.foodTypes.collectAsState()
 
-                    if (isLoading) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator()
-                        }
-                    } else {
+                val glucoseRepository =
+                    GlucoseRepositoryImpl(db.glucoseDao())
+                val glucoseViewModel: GlucoseViewModel = viewModel(
+                    factory = GlucoseViewModelFactory(
+                        getAllGlucoseEntriesUseCase = GetAllGlucoseEntriesUseCase(
+                            glucoseRepository
+                        ),
+                        getAllGlucoseEntriesOnceUseCase = GetAllGlucoseEntriesOnceUseCase(
+                            glucoseRepository
+                        ),
+                        getGlucoseEntriesBetweenUseCase = GetGlucoseEntriesBetweenUseCase(
+                            glucoseRepository
+                        ),
+                        insertGlucoseUseCase = InsertGlucoseUseCase(
+                            glucoseRepository
+                        ),
+                        updateGlucoseEntryUseCase = UpdateGlucoseEntryUseCase(
+                            glucoseRepository
+                        ),
+                        deleteGlucoseEntryUseCase = DeleteGlucoseEntryUseCase(
+                            glucoseRepository
+                        ),
+                        updateNoteForEntryUseCase = UpdateNoteForEntryUseCase(
+                            glucoseRepository
+                        )
+                    )
+                )
+                val glucoseReadings by glucoseViewModel.glucoseEntries.collectAsState()
 
-                        if (userProfile == null) {
-                            var currentProfile by remember {
-                                mutableStateOf(
-                                    UserProfile(
-                                        email = "",
-                                        name = "",
-                                        gender = "",
-                                        weight = 0.0,
-                                        height = 0.0,
-                                        diabetesType = "",
-                                        targetGlucoseLow = 0.0,
-                                        targetGlucoseHigh = 0.0,
-                                        glucoseUnit = "",
-                                        bolusInsulin = "",
-                                        bolusDose = 0.0,
-                                        basalInsulin = "",
-                                        basalDose = 0.0,
-                                        medication = "",
-                                        medicationDose = 0.0,
-                                        medicationUnit = "",
-                                        medicationTimeMinutesFromMidnight = 0
+                val insulinRepository =
+                    InsulinRepositoryImpl(db.insulinDao())
+                val insulinViewModel: InsulinViewModel = viewModel(
+                    factory = InsulinViewModelFactory(
+                        getAllInsulinEntriesUseCase = GetAllInsulinEntriesUseCase(
+                            insulinRepository
+                        ),
+                        getAllInsulinEntriesOnceUseCase = GetAllInsulinEntriesOnceUseCase(
+                            insulinRepository
+                        ),
+                        getInsulinEntriesBetweenUseCase = GetInsulinEntriesBetweenUseCase(
+                            insulinRepository
+                        ),
+                        insertInsulinEntryUseCase = InsertInsulinEntryUseCase(
+                            insulinRepository
+                        ),
+                        updateInsulinEntryUseCase = UpdateInsulinEntryUseCase(
+                            insulinRepository
+                        ),
+                        deleteInsulinEntryUseCase = DeleteInsulinEntryUseCase(
+                            insulinRepository
+                        ),
+                        insertInsulinTypeUseCase = InsertInsulinTypeUseCase(
+                            insulinRepository
+                        ),
+                        getAllInsulinTypesUseCase = GetAllInsulinTypesUseCase(
+                            insulinRepository
+                        ),
+                        getInsulinTypeByIdUseCase = GetInsulinTypeByIdUseCase(
+                            insulinRepository
+                        ),
+                        getInsulinTypeByNameUseCase = GetInsulinTypeByNameUseCase(
+                            insulinRepository
+                        ),
+                        insertAllInsulinTypesUseCase = InsertAllInsulinTypesUseCase(
+                            insulinRepository
+                        ),
+                        getAllInsulinEntriesWithTypesUseCase = GetAllInsulinEntriesWithTypesUseCase(
+                            insulinRepository
+                        ),
+                        getAllInsulinEntriesWithTypesOnceUseCase = GetAllInsulinEntriesWithTypesOnceUseCase(
+                            insulinRepository
+                        )
+                    )
+                )
+                val insulinRecords by insulinViewModel.insulinEntries.collectAsState()
+                val insulinTypes by insulinViewModel.insulinTypes.collectAsState()
+                val insulinEntriesWithTypesCard = insulinViewModel.insulinEntriesWithTypes.collectAsState().value
+
+                val activityRepository =
+                    ActivityRepositoryImpl(db.activityDao())
+                val activityViewModel: ActivityEntryViewModel = viewModel(
+                    factory = ActivityEntryViewModelFactory(
+                        getAllActivityTypesUseCase = GetAllActivityTypesUseCase(
+                            activityRepository
+                        ),
+                        insertActivityTypeUseCase = InsertActivityTypeUseCase(
+                            activityRepository
+                        ),
+                        insertAllActivityTypesUseCase = InsertAllActivityTypesUseCase(
+                            activityRepository
+                        ),
+                        getAllActivityEntriesUseCase = GetAllActivityEntriesUseCase(
+                            activityRepository
+                        ),
+                        getAllActivityEntriesWithTypesFlowUseCase = GetAllActivityEntriesWithTypesFlowUseCase(
+                            activityRepository
+                        ),
+                        getAllActivityEntriesOnceWithTypesUseCase = GetAllActivityEntriesOnceWithTypesUseCase(
+                            activityRepository
+                        ),
+                        getActivityByIdUseCase = GetActivityByIdUseCase(
+                            activityRepository
+                        ),
+                        getAllActivityEntriesOnceUseCase = GetAllActivityEntriesOnceUseCase(
+                            activityRepository
+                        ),
+                        getActivityTypeByNameUseCase = GetActivityTypeByNameUseCase(
+                            activityRepository
+                        ),
+                        getActivityEntriesBetweenUseCase = GetActivitiesBetweenUseCase(
+                            activityRepository
+                        ),
+                        insertActivityEntryUseCase = InsertActivityEntryUseCase(
+                            activityRepository
+                        ),
+                        updateActivityEntryUseCase = UpdateActivityEntryUseCase(
+                            activityRepository
+                        ),
+                        deleteActivityEntryUseCase = DeleteActivityEntryUseCase(
+                            activityRepository
+                        )
+                    )
+                )
+                val activityRecords by activityViewModel.activityEntries.collectAsState()
+                val activityTypes by activityViewModel.activityTypes.collectAsState()
+
+                val medicationRepository =
+                    MedicationRepositoryImpl(db.medicationDao())
+                val medicationViewModel: MedicationViewModel = viewModel(
+                    factory = MedicationViewModelFactory(
+                        getAllMedicationTypesUseCase = GetAllMedicationTypesUseCase(
+                            medicationRepository
+                        ),
+                        insertMedicationTypeUseCase = InsertMedicationTypeUseCase(
+                            medicationRepository
+                        ),
+                        insertAllMedicationTypesUseCase = InsertAllMedicationTypesUseCase(
+                            medicationRepository
+                        ),
+                        getAllMedicationEntriesUseCase = GetAllMedicationEntriesUseCase(
+                            medicationRepository
+                        ),
+                        getAllMedicationEntriesWithTypesUseCase = GetAllMedicationEntriesWithTypesUseCase(
+                            medicationRepository
+                        ),
+                        getAllMedicationEntriesOnceWithTypesUseCase = GetAllMedicationEntriesOnceWithTypesUseCase(
+                            medicationRepository
+                        ),
+                        getMedicationByIdUseCase = GetMedicationByIdUseCase(
+                            medicationRepository
+                        ),
+                        getAllMedicationEntriesOnceUseCase = GetAllMedicationEntriesOnceUseCase(
+                            medicationRepository
+                        ),
+                        getMedicationTypeByNameUseCase = GetMedicationTypeByNameUseCase(
+                            medicationRepository
+                        ),
+                        getMedicationEntriesBetweenUseCase = GetMedicationEntriesBetweenUseCase(
+                            medicationRepository
+                        ),
+                        insertMedicationEntryUseCase = InsertMedicationEntryUseCase(
+                            medicationRepository
+                        ),
+                        updateMedicationEntryUseCase = UpdateMedicationEntryUseCase(
+                            medicationRepository
+                        ),
+                        deleteMedicationEntryUseCase = DeleteMedicationEntryUseCase(
+                            medicationRepository
+                        )
+                    )
+                )
+                val medicationRecords by medicationViewModel.medicationEntries.collectAsState()
+                val medicationTypes by medicationViewModel.medicationTypes.collectAsState()
+
+
+                val glucoseEntries by db.glucoseDao().getAllGlucoseEntries()
+                    .collectAsState(initial = emptyList())
+                val foodEntriesWithItems by db.foodDao().getAllFoodEntriesWithItemsFlow()
+                    .collectAsState(initial = emptyList())
+                val insulinEntriesWithTypes by db.insulinDao().getAllInsulinEntriesWithTypesFlow()
+                    .collectAsState(initial = emptyList())
+                val activityEntriesWithTypes by db.activityDao()
+                    .getAllActivityEntriesWithTypesFlow().collectAsState(initial = emptyList())
+                val medicationEntriesWithTypes by db.medicationDao()
+                    .getAllMedicationEntriesWithTypesFlow().collectAsState(initial = emptyList())
+
+                val navController = rememberNavController()
+
+                Scaffold(
+                    topBar = {
+                        val currentRoute =
+                            navController.currentBackStackEntryAsState().value?.destination?.route
+                        TopAppBar(
+                            title = {
+                                Column {
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+
+                                        val icon = when (currentRoute) {
+                                            Routes.DASHBOARD -> Icons.Filled.ShowChart
+                                            Routes.PROFILE -> Icons.Filled.Person
+                                            Routes.PROFILE_FORM -> Icons.Filled.Edit
+                                            Routes.RECORD_SELECTOR -> Icons.Filled.Add
+                                            Routes.RECORD_HISTORY -> Icons.Filled.History
+                                            else -> Icons.Filled.Apps
+                                        }
+                                        Icon(
+                                            imageVector = icon,
+                                            contentDescription = currentRoute,
+                                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                        )
+
+                                        Text(
+                                            when (currentRoute) {
+                                                Routes.DASHBOARD -> "Панель управления"
+                                                Routes.PROFILE -> "Профиль"
+                                                Routes.PROFILE_FORM -> "Редактирование профиля"
+                                                Routes.RECORD_SELECTOR -> "Добавить запись"
+                                                Routes.RECORD_HISTORY -> "История записей"
+                                                else -> "GlucoDiaLog"
+                                            },
+                                            style = MaterialTheme.typography.titleMedium
+                                        )
+                                    }
+
+                                    Text(
+                                        when (currentRoute) {
+                                            Routes.DASHBOARD -> "Обзор ваших показателей"
+                                            Routes.PROFILE -> "Просмотр информации о пользователе"
+                                            Routes.PROFILE_FORM -> "Заполните или измените данные профиля"
+                                            Routes.RECORD_SELECTOR -> "Выберите тип записи для добавления"
+                                            Routes.RECORD_HISTORY -> "История всех записей"
+                                            else -> ""
+                                        },
+                                        style = MaterialTheme.typography.bodySmall
                                     )
+                                }
+                            },
+                            colors = TopAppBarDefaults.smallTopAppBarColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer
+                            )
+                        )
+                    },
+                    bottomBar = {
+                        if (userProfile != null) {
+                            BottomNavigationBar(navController = navController)
+                        }
+                    }
+                ) { innerPadding ->
+                    Box(
+                        modifier = Modifier
+                            .padding(innerPadding)
+                            .fillMaxSize()
+                    ) {
+                        when {
+                            isLoading -> {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    CircularProgressIndicator()
+                                }
+                            }
+
+                            userProfile == null -> {
+                                var currentProfile by remember {
+                                    mutableStateOf(
+                                        UserProfile(
+                                            email = "",
+                                            name = "",
+                                            gender = "",
+                                            weight = 0.0,
+                                            height = 0.0,
+                                            diabetesType = "",
+                                            targetGlucoseLow = 0.0,
+                                            targetGlucoseHigh = 0.0,
+                                            glucoseUnit = "",
+                                            bolusInsulin = "",
+                                            bolusDose = 0.0,
+                                            basalInsulin = "",
+                                            basalDose = 0.0,
+                                            medication = "",
+                                            medicationDose = 0.0,
+                                            medicationUnit = "",
+                                            medicationTimeMinutesFromMidnight = 0
+                                        )
+                                    )
+                                }
+
+                                ProfileFormScreen(
+                                    profile = currentProfile,
+                                    onUpdateProfile = { updatedProfile ->
+                                        viewModel.insertUserProfile(updatedProfile)
+                                    },
+                                    onBack = { finish() }
                                 )
                             }
 
-                            ProfileForm(
-                                profile = currentProfile,
-                                onUpdateProfile = { updatedProfile ->
-                                    scope.launch {
-                                        db.userProfileDao().insertUserProfile(updatedProfile)
-                                        userProfile = updatedProfile
-                                    }
-                                },
-                                onBack = { finish() }
-                            )
+                            else -> {
+                                NavHost(
+                                    navController = navController,
+                                    startDestination = Routes.DASHBOARD
+                                ) {
+                                    composable(Routes.DASHBOARD) {
+                                        val context = LocalContext.current
+                                        val db = AppDatabase.getDatabase(context)
 
-                        } else {
-                            NavHost(
-                                navController = navController,
-                                startDestination = Routes.DASHBOARD
-                            ) {
-
-                                composable(Routes.DASHBOARD) {
-                                    Dashboard(
-                                        glucoseEntries = glucoseEntries,
-                                        foodEntriesWithItems = foodEntriesWithItems,
-                                        insulinEntriesWithTypes = insulinEntriesWithTypes,
-                                        activityEntriesWithTypes = activityEntriesWithTypes,
-                                        medicationEntriesWithTypes = medicationEntriesWithTypes
-                                    )
-                                }
-
-                                composable(Routes.PROFILE) {
-                                    ProfileView(
-                                        profile = userProfile!!,
-                                        onEdit = { navController.navigate(Routes.PROFILE_FORM) }
-                                    )
-                                }
-
-                                composable(Routes.PROFILE_FORM) {
-                                    ProfileForm(
-                                        profile = userProfile!!,
-                                        onUpdateProfile = { updatedProfile ->
-                                            scope.launch {
-                                                db.userProfileDao().insertUserProfile(updatedProfile)
-                                                userProfile = updatedProfile
-                                                navController.popBackStack()
+                                        Dashboard(
+                                            glucoseEntries = glucoseReadings,
+                                            foodEntriesWithItems = meals.map { foodEntry ->
+                                                FoodEntryWithTypeDomain(
+                                                    entry = foodEntry,
+                                                    type = foodItems.find { it.id == foodEntry.foodTypeId }
+                                                )
+                                            },
+                                            insulinEntriesWithTypes = insulinRecords.map { insulinEntry ->
+                                                InsulinEntryWithTypeDomain(
+                                                    entry = insulinEntry,
+                                                    type = insulinTypes.find { it.id == insulinEntry.insulinTypeId }
+                                                )
+                                            },
+                                            activityEntriesWithTypes = activityRecords.map { activityEntry ->
+                                                ActivityEntryWithTypeDomain(
+                                                    entry = activityEntry,
+                                                    type = activityTypes.find { it.id == activityEntry.activityTypeId }
+                                                )
+                                            },
+                                            medicationEntriesWithTypes = medicationRecords.map { medicationEntry ->
+                                                MedicationEntryWithTypeDomain(
+                                                    entry = medicationEntry,
+                                                    type = medicationTypes.find { it.id == medicationEntry.medicationTypeId }
+                                                )
                                             }
-                                        },
-                                        onBack = { navController.popBackStack() }
-                                    )
-                                }
+                                        )
+                                    }
 
-                                composable(Routes.RECORD_SELECTOR) {
-                                    RecordTypeSelector(
-                                        onSelectScreen = { route -> navController.navigate(route) }
-                                    )
-                                }
+                                    composable(Routes.PROFILE) {
+                                        ProfileViewScreen(
+                                            profile = userProfile!!,
+                                            onEdit = { navController.navigate(Routes.PROFILE_FORM) }
+                                        )
+                                    }
 
-                                composable(Routes.GLUCOSE) {
-                                    val context = LocalContext.current
-                                    val db = AppDatabase.getDatabase(context)
-                                    val glucoseDao = db.glucoseDao()
-                                    val userProfileDao = db.userProfileDao()
-                                    val userProfile by userProfileDao.getUserProfile().collectAsState(initial = null)
+                                    composable(Routes.PROFILE_FORM) {
+                                        ProfileFormScreen(
+                                            profile = userProfile!!,
+                                            onUpdateProfile = { updatedProfile ->
+                                                viewModel.updateUserProfile(updatedProfile)
+                                                navController.popBackStack()
+                                            },
+                                            onBack = { navController.popBackStack() }
+                                        )
+                                    }
 
-                                    GlucoseEntryScreen(
-                                        userProfile = userProfile,
-                                        glucoseDao = glucoseDao,
-                                        onBack = { navController.popBackStack() }
-                                    )
-                                }
+                                    composable(Routes.RECORD_SELECTOR) {
+                                        RecordTypeSelector(
+                                            onSelectScreen = { route -> navController.navigate(route) }
+                                        )
+                                    }
 
-                                composable(Routes.INSULIN) {
-                                    val context = LocalContext.current
-                                    val db = AppDatabase.getDatabase(context)
-                                    val insulinDao = db.insulinDao()
-                                    val userProfileDao = db.userProfileDao()
-                                    val userProfile by userProfileDao.getUserProfile().collectAsState(initial = null)
+                                    composable(Routes.GLUCOSE) {
 
-                                    InsulinEntryScreen(
-                                        userProfile = userProfile,
-                                        insulinDao = insulinDao,
-                                        onBack = { navController.popBackStack() }
-                                    )
-                                }
+                                        GlucoseEntryScreen(
+                                            viewModel = glucoseViewModel,
+                                            userProfile = userProfile,
+                                            onBack = { navController.popBackStack() }
+                                        )
+                                    }
 
-                                composable(Routes.MEDICATION) {
-                                    val context = LocalContext.current
-                                    val db = AppDatabase.getDatabase(context)
-                                    val medicationDao = db.medicationDao()
-                                    val userProfileDao = db.userProfileDao()
-                                    val userProfile by userProfileDao.getUserProfile().collectAsState(initial = null)
+                                    composable(Routes.INSULIN) {
 
-                                    MedicationEntryScreen(
-                                        userProfile = userProfile,
-                                        medicationDao = medicationDao,
-                                        onBack = { navController.popBackStack() }
-                                    )
-                                }
+                                        InsulinEntryScreen(
+                                            viewModel = insulinViewModel,
+                                            userProfile = userProfile,
+                                            onBack = { navController.popBackStack() }
+                                        )
+                                    }
 
-                                composable(Routes.MEAL) {
-                                    val context = LocalContext.current
-                                    val db = AppDatabase.getDatabase(context)
-                                    val foodDao = db.foodDao()
-                                    val userProfileDao = db.userProfileDao()
-                                    val userProfile by userProfileDao.getUserProfile().collectAsState(initial = null)
+                                    composable(Routes.MEDICATION) {
+//
+                                        MedicationEntryScreen(
+                                            viewModel = medicationViewModel,
+                                            onBack = { navController.popBackStack() }
+                                        )
+                                    }
 
-                                    MealEntryScreen(
-                                        userProfile = userProfile,
-                                        foodDao = foodDao,
-                                        onBack = { navController.popBackStack() }
-                                    )
-                                }
+                                    composable(Routes.MEAL) {
 
-                                composable(Routes.ACTIVITY) {
-                                    val context = LocalContext.current
-                                    val db = AppDatabase.getDatabase(context)
-                                    val activityDao = db.activityDao()
-                                    val userProfileDao = db.userProfileDao()
-                                    val userProfile by userProfileDao.getUserProfile().collectAsState(initial = null)
+                                        MealEntryScreen(
+                                            viewModel = foodViewModel,
+                                            userProfile = userProfile,
+                                            onBack = { navController.popBackStack() }
+                                        )
+                                    }
 
-                                    ActivityEntryScreen(
-                                        userProfile = userProfile,
-                                        activityDao = activityDao,
-                                        onBack = { navController.popBackStack() }
-                                    )
-                                }
+                                    composable(Routes.ACTIVITY) {
+                                        ActivityEntryScreen(
+                                            viewModel = activityViewModel,
+                                            onBack = { navController.popBackStack() }
+                                        )
+                                    }
 
-                                composable(Routes.RECORD_HISTORY) {
-                                    val context = LocalContext.current
-                                    val db = AppDatabase.getDatabase(context)
+                                    composable(Routes.RECORD_HISTORY) {
+                                        val context = LocalContext.current
+                                        val db = AppDatabase.getDatabase(context)
 
-                                    val activityTypes by db.activityDao().getAllActivityTypes().collectAsState(initial = emptyList())
-                                    val foodItems by db.foodDao().getAllFoodItems().collectAsState(initial = emptyList())
-                                    val insulinTypes by db.insulinDao().getAllInsulinTypes().collectAsState(initial = emptyList())
-                                    val medicationTypes by db.medicationDao().getAllMedicationTypes().collectAsState(initial = emptyList())
-
-                                    RecordHistory(
-                                        onSelectScreen = { route -> navController.navigate(route) },
-                                        glucoseReadings = glucoseEntries,
-                                        meals = foodEntriesWithItems.map { it.entry },
-                                        insulinRecords = insulinEntriesWithTypes.map { it.entry },
-                                        activityRecords = activityEntriesWithTypes.map { it.entry },
-                                        medicationRecords = medicationEntriesWithTypes.map { it.entry },
-                                        userProfile = userProfile,
-                                        activityTypes = activityTypes,
-                                        foodItems = foodItems,
-                                        insulinTypes = insulinTypes,
-                                        medicationTypes = medicationTypes
-                                    )
+                                        RecordHistoryScreen(
+                                            onSelectScreen = { route -> navController.navigate(route) },
+                                            userProfile = userProfile,
+                                            glucoseReadings = glucoseReadings,
+                                            meals = meals,
+                                            insulinRecords = insulinEntriesWithTypesCard,
+                                            activityRecords = activityRecords,
+                                            medicationRecords = medicationRecords,
+                                            activityTypes = activityTypes,
+                                            foodItems = foodItems,
+                                            insulinTypes = insulinTypes,
+                                            medicationTypes = medicationTypes,
+                                            foodViewModel = foodViewModel,
+                                            insulinViewModel = insulinViewModel,
+                                            activityViewModel = activityViewModel,
+                                            glucoseViewModel = glucoseViewModel,
+                                            medicationViewModel = medicationViewModel
+                                        )
+                                    }
                                 }
                             }
                         }

@@ -1,100 +1,90 @@
-package com.example.glucodialog.ui
+package com.example.glucodialog.ui.screen
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccessAlarms
+import androidx.compose.material.icons.filled.DirectionsRun
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
-import com.example.glucodialog.data.local.ActivityEntry
-import com.example.glucodialog.data.local.ActivityType
-import com.example.glucodialog.data.local.UserProfile
-import com.example.glucodialog.data.repository.ActivityDao
 import com.example.glucodialog.ui.components.DateTimePickerButton
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
 import java.util.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import com.example.glucodialog.domain.model.ActivityEntry
+import com.example.glucodialog.domain.model.ActivityType
+import com.example.glucodialog.ui.viewmodel.ActivityEntryViewModel
+import java.text.SimpleDateFormat
+import androidx.compose.ui.text.input.KeyboardType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ActivityEntryScreen(
-    activityDao: ActivityDao,
-    onBack: () -> Unit,
-    userProfile: UserProfile?,
+    viewModel: ActivityEntryViewModel,
+    onBack: () -> Unit
 ) {
-    val scope = rememberCoroutineScope()
-
-    var activityTypes by remember { mutableStateOf<List<ActivityType>>(emptyList()) }
-    var selectedType by remember { mutableStateOf<ActivityType?>(null) }
-    var addingNewType by remember { mutableStateOf(false) }
-    var newTypeName by remember { mutableStateOf("") }
-
+    val activityTypes by viewModel.activityTypes.collectAsState()
+    var selectedType by remember { mutableStateOf<ActivityType?>(activityTypes.firstOrNull()) }
     var durationMinutes by remember { mutableStateOf("") }
-    var durationTouched by remember { mutableStateOf(false) }
-    var typeTouched by remember { mutableStateOf(false) }
-    var attemptedSave by remember { mutableStateOf(false) }
-
     var calendar by remember { mutableStateOf(Calendar.getInstance()) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-
+    var addingNewType by remember { mutableStateOf(false) }
+    var newTypeName by remember { mutableStateOf("") }
     var expandedType by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
-        activityTypes = activityDao.getAllActivityTypes().firstOrNull() ?: emptyList()
-        if (activityTypes.isNotEmpty()) selectedType = activityTypes[0]
-    }
-
-    val durationValue = durationMinutes.toIntOrNull()
-    val canSave = selectedType != null && durationValue != null && durationValue > 0
-
-    val showTypeError = (typeTouched || attemptedSave) && selectedType == null && !addingNewType
-    val showDurationError = (durationTouched || attemptedSave) && durationMinutes.isNotBlank() && (durationValue == null || durationValue <= 0)
+    val canSave = selectedType != null && durationMinutes.toIntOrNull()?.let { it > 0 } == true
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Icon(
+                imageVector = Icons.Filled.DirectionsRun,
+                contentDescription = "Активность",
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Text("Ввод активности", style = MaterialTheme.typography.titleLarge)
+        }
 
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFE0F2FE))
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            elevation = CardDefaults.cardElevation(4.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("🏃 Тип активности", style = MaterialTheme.typography.titleLarge)
 
                 if (!addingNewType) {
                     ExposedDropdownMenuBox(
                         expanded = expandedType,
-                        onExpandedChange = { expandedType = it },
+                        onExpandedChange = { expandedType = !expandedType },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         OutlinedTextField(
                             value = selectedType?.name ?: "",
                             onValueChange = {},
                             readOnly = true,
-                            label = { Text("Название активности") },
-                            isError = showTypeError,
+                            label = { Text("Тип активности") },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedType) },
                             modifier = Modifier
                                 .menuAnchor()
-                                .onFocusChanged { state ->
-                                    if (!state.isFocused) typeTouched = true
-                                }
+                                .fillMaxWidth()
                         )
+
                         ExposedDropdownMenu(
                             expanded = expandedType,
-                            onDismissRequest = { expandedType = false }
+                            onDismissRequest = { expandedType = false },
                         ) {
                             activityTypes.forEach { type ->
                                 DropdownMenuItem(
@@ -115,9 +105,6 @@ fun ActivityEntryScreen(
                             )
                         }
                     }
-                    if (showTypeError) {
-                        Text("Выберите тип активности", color = Color.Red, style = MaterialTheme.typography.bodySmall)
-                    }
                 } else {
                     OutlinedTextField(
                         value = newTypeName,
@@ -125,27 +112,22 @@ fun ActivityEntryScreen(
                         label = { Text("Название новой активности") },
                         modifier = Modifier.fillMaxWidth()
                     )
-
                     Button(
                         onClick = {
-                            if (newTypeName.isBlank()) {
-                                errorMessage = "Введите название новой активности"
-                                return@Button
-                            }
-                            val type = ActivityType(name = newTypeName)
-                            scope.launch {
-                                activityDao.insertActivityType(type)
-                                activityTypes = activityDao.getAllActivityTypes().firstOrNull() ?: emptyList()
-                                selectedType = activityTypes.last()
+                            if (newTypeName.isNotBlank()) {
+                                val type = ActivityType(name = newTypeName)
+                                viewModel.addActivityType(type)
+                                selectedType = type
                                 addingNewType = false
                                 newTypeName = ""
-                                typeTouched = false
                                 errorMessage = null
+                            } else {
+                                errorMessage = "Введите название новой активности"
                             }
                         },
-                        modifier = Modifier.fillMaxWidth().height(50.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0288D1)),
-                        shape = RoundedCornerShape(12.dp)
+                        modifier = Modifier.fillMaxWidth().height(56.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                     ) {
                         Text("Сохранить новый тип", color = Color.White)
                     }
@@ -155,85 +137,75 @@ fun ActivityEntryScreen(
 
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFF3E5F5))
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            elevation = CardDefaults.cardElevation(4.dp)
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                OutlinedTextField(
-                    value = durationMinutes,
-                    onValueChange = { value ->
-                        durationMinutes = value
-                        errorMessage = null
-                    },
-                    label = { Text("Длительность (минуты)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    isError = showDurationError,
-                    singleLine = true,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .onFocusChanged { state ->
-                            if (!state.isFocused) durationTouched = true
-                        }
-                )
-                if (showDurationError) {
-                    Text("Введите корректную длительность", color = Color.Red, style = MaterialTheme.typography.bodySmall)
-                }
-            }
+            OutlinedTextField(
+                value = durationMinutes,
+                onValueChange = { durationMinutes = it; errorMessage = null },
+                label = { Text("Длительность (минуты)") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            )
         }
 
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF7E6))
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            elevation = CardDefaults.cardElevation(4.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 val dateFormat = remember { SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault()) }
-                Text("⏰ Дата и время активности: ${dateFormat.format(calendar.time)}")
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(
+                        imageVector = Icons.Filled.AccessAlarms,
+                        contentDescription = "Дата и время",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Text("Дата и время: ${dateFormat.format(calendar.time)}")
+                }
                 DateTimePickerButton(
                     calendar = calendar,
-                    onDateTimeSelected = { updatedCalendar ->
-                        calendar = updatedCalendar
-                    }
+                    onDateTimeSelected = { calendar = it }
                 )
             }
         }
 
-        errorMessage?.let { Text(it, color = Color.Red) }
-
+        errorMessage?.let { Text(it, color = MaterialTheme.colorScheme.error) }
 
         Button(
             onClick = {
-                attemptedSave = true
                 val minutes = durationMinutes.toIntOrNull()
-                if (!canSave) {
+                if (selectedType == null || minutes == null || minutes <= 0) {
                     errorMessage = "Заполните все поля корректно"
-                    durationTouched = true
-                    typeTouched = true
                     return@Button
                 }
                 val entry = ActivityEntry(
                     activityTypeId = selectedType!!.id,
-                    durationMinutes = minutes!!,
+                    durationMinutes = minutes,
                     timestamp = calendar.timeInMillis
                 )
-                scope.launch {
-                    activityDao.insertActivityEntry(entry)
-                    onBack()
-                }
-                durationMinutes = ""
-                durationTouched = false
-                typeTouched = false
-                attemptedSave = false
-                errorMessage = null
+                viewModel.addActivityEntry(entry)
+                onBack()
             },
             enabled = canSave,
-            modifier = Modifier.fillMaxWidth().height(50.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = if (canSave) Color(0xFF0288D1) else Color.Gray
-            ),
-            shape = RoundedCornerShape(12.dp)
+            modifier = Modifier.fillMaxWidth().height(56.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
         ) {
-            Text("💾 Добавить запись", color = Color.White)
+            Icon(
+                imageVector = Icons.Filled.Save,
+                contentDescription = "Сохранить запись",
+                tint = Color.White,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(Modifier.width(8.dp))
+            Text("Добавить запись", color = Color.White)
         }
     }
 }

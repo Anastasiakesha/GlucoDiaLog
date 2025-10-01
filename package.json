@@ -1,0 +1,5 @@
+{
+  "devDependencies": {
+    "@builder.io/cli": "^1.2.10"
+  }
+}

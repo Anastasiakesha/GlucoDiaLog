@@ -1,41 +1,46 @@
-package com.example.glucodialog.ui
-
+package com.example.glucodialog.ui.screen
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
-import com.example.glucodialog.data.local.FoodEntry
-import com.example.glucodialog.data.local.FoodItem
-import kotlinx.coroutines.launch
-import java.util.*
-import com.example.glucodialog.ui.components.DateTimePickerButton
-import kotlinx.coroutines.flow.firstOrNull
-import com.example.glucodialog.data.local.UserProfile
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccessAlarms
+import androidx.compose.material.icons.filled.MedicalServices
+import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.Save
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import com.example.glucodialog.data.repository.FoodDao
-
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
+import com.example.glucodialog.domain.model.FoodEntry
+import com.example.glucodialog.domain.model.FoodType
+import com.example.glucodialog.domain.model.UserProfile
+import com.example.glucodialog.ui.components.DateTimePickerButton
+import com.example.glucodialog.ui.viewmodel.FoodViewModel
+import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.*
 
 @SuppressLint("UnrememberedMutableState")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MealEntryScreen(
-    foodDao: FoodDao,
+    viewModel: FoodViewModel,
     onBack: () -> Unit,
     userProfile: UserProfile?,
 ) {
     val scope = rememberCoroutineScope()
+    val foodTypes by viewModel.foodTypes.collectAsState()
 
-    var foodItems by remember { mutableStateOf<List<FoodItem>>(emptyList()) }
-    var selectedFood by remember { mutableStateOf<FoodItem?>(null) }
+    var selectedFood by remember { mutableStateOf<FoodType?>(null) }
     var addingNewFood by remember { mutableStateOf(false) }
+
     var newFoodName by remember { mutableStateOf("") }
     var newCalories by remember { mutableStateOf("") }
     var newProteins by remember { mutableStateOf("") }
@@ -46,7 +51,11 @@ fun MealEntryScreen(
     var selectedUnit by remember { mutableStateOf<String?>(null) }
     var quantityText by remember { mutableStateOf("") }
     var calendar by remember { mutableStateOf(Calendar.getInstance()) }
+    var currentGlucose by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    val expandedFood = remember { mutableStateOf(false) }
+    val expandedUnit = remember { mutableStateOf(false) }
 
     val carbRatio = remember(userProfile) {
         userProfile?.let { profile ->
@@ -54,11 +63,6 @@ fun MealEntryScreen(
             if (tdd > 0) 500 / tdd else null
         }
     }
-    val targetGlucose = remember(userProfile) { userProfile?.targetGlucoseHigh }
-    var currentGlucose by remember { mutableStateOf("") }
-
-    var expandedFood by remember { mutableStateOf(false) }
-    var expandedUnit by remember { mutableStateOf(false) }
 
     val isFormValid by derivedStateOf {
         selectedFood != null &&
@@ -67,9 +71,11 @@ fun MealEntryScreen(
                 currentGlucose.toDoubleOrNull() != null
     }
 
-    LaunchedEffect(Unit) {
-        foodItems = foodDao.getAllFoodItems().firstOrNull() ?: emptyList()
-        if (foodItems.isNotEmpty()) selectedFood = foodItems[0]
+    LaunchedEffect(foodTypes) {
+        if (selectedFood == null && foodTypes.isNotEmpty()) {
+            selectedFood = foodTypes.first()
+            selectedUnit = selectedFood?.allowedUnits?.split(",")?.map { it.trim() }?.firstOrNull()
+        }
     }
 
     Column(
@@ -77,42 +83,44 @@ fun MealEntryScreen(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Icon(
+                imageVector = Icons.Filled.Restaurant,
+                contentDescription = "Продукт",
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Text(" Добавление продукта", style = MaterialTheme.typography.titleLarge)
+        }
+
+
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFE0F2FE))
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            elevation = CardDefaults.cardElevation(4.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("🍽 Продукт", style = MaterialTheme.typography.titleLarge)
-
                 if (!addingNewFood) {
-                    ExposedDropdownMenuBox(
-                        expanded = expandedFood,
-                        onExpandedChange = { expandedFood = it },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
+                    ExposedDropdownMenuBox(expanded = expandedFood.value, onExpandedChange = { expandedFood.value = it }) {
                         OutlinedTextField(
                             value = selectedFood?.name ?: "",
                             onValueChange = {},
                             readOnly = true,
                             label = { Text("Название продукта") },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedFood) },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedFood.value) },
                             modifier = Modifier.menuAnchor()
                         )
-                        ExposedDropdownMenu(
-                            expanded = expandedFood,
-                            onDismissRequest = { expandedFood = false }
-                        ) {
-                            foodItems.forEach { food ->
+                        ExposedDropdownMenu(expanded = expandedFood.value, onDismissRequest = { expandedFood.value = false }) {
+                            foodTypes.forEach { food ->
                                 DropdownMenuItem(
                                     text = { Text(food.name) },
                                     onClick = {
                                         selectedFood = food
                                         selectedUnit = food.allowedUnits.split(",").map { it.trim() }.firstOrNull()
                                         quantityText = ""
-                                        expandedFood = false
+                                        expandedFood.value = false
                                     }
                                 )
                             }
@@ -121,53 +129,18 @@ fun MealEntryScreen(
                                 onClick = {
                                     addingNewFood = true
                                     selectedFood = null
-                                    expandedFood = false
+                                    expandedFood.value = false
                                 }
                             )
                         }
                     }
                 } else {
-                    // Ввод нового продукта
-                    OutlinedTextField(
-                        value = newFoodName,
-                        onValueChange = { newFoodName = it },
-                        label = { Text("Название продукта") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    OutlinedTextField(
-                        value = newCalories,
-                        onValueChange = { newCalories = it },
-                        label = { Text("Калории") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    OutlinedTextField(
-                        value = newProteins,
-                        onValueChange = { newProteins = it },
-                        label = { Text("Белки (г)") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    OutlinedTextField(
-                        value = newFats,
-                        onValueChange = { newFats = it },
-                        label = { Text("Жиры (г)") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    OutlinedTextField(
-                        value = newCarbs,
-                        onValueChange = { newCarbs = it },
-                        label = { Text("Углеводы (г)") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    OutlinedTextField(
-                        value = newUnits,
-                        onValueChange = { newUnits = it },
-                        label = { Text("Единицы (через запятую)") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    OutlinedTextField(newFoodName, { newFoodName = it }, label = { Text("Название продукта") }, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(newCalories, { newCalories = it }, label = { Text("Калории") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(newProteins, { newProteins = it }, label = { Text("Белки (г)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(newFats, { newFats = it }, label = { Text("Жиры (г)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(newCarbs, { newCarbs = it }, label = { Text("Углеводы (г)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(newUnits, { newUnits = it }, label = { Text("Единицы (через запятую)") }, modifier = Modifier.fillMaxWidth())
 
                     Button(
                         onClick = {
@@ -175,13 +148,11 @@ fun MealEntryScreen(
                             val proteins = newProteins.toDoubleOrNull()
                             val fats = newFats.toDoubleOrNull()
                             val carbs = newCarbs.toDoubleOrNull()
-
                             if (newFoodName.isBlank() || calories == null || proteins == null || fats == null || carbs == null || newUnits.isBlank()) {
                                 errorMessage = "Введите корректные данные нового продукта"
                                 return@Button
                             }
-
-                            val food = FoodItem(
+                            val food = FoodType(
                                 name = newFoodName,
                                 calories = calories,
                                 proteins = proteins,
@@ -190,67 +161,46 @@ fun MealEntryScreen(
                                 allowedUnits = newUnits
                             )
                             scope.launch {
-                                foodDao.insertFoodItem(food)
-                                foodItems = foodDao.getAllFoodItems().firstOrNull() ?: emptyList()
-                                selectedFood = foodItems.last()
-                                selectedUnit = selectedFood?.allowedUnits?.split(",")?.map { it.trim() }?.firstOrNull()
+                                viewModel.addFoodType(food)
                                 addingNewFood = false
-                                newFoodName = ""
-                                newCalories = ""
-                                newProteins = ""
-                                newFats = ""
-                                newCarbs = ""
-                                newUnits = ""
+                                newFoodName = ""; newCalories = ""; newProteins = ""; newFats = ""; newCarbs = ""; newUnits = ""
                             }
                         },
-                        modifier = Modifier.fillMaxWidth().height(50.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0288D1)),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text("Сохранить новый продукт", color = Color.White)
-                    }
+                        modifier = Modifier.fillMaxWidth().height(56.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    ) { Text("Сохранить новый продукт", color = Color.White) }
                 }
             }
         }
 
-        if (selectedFood != null) {
-            val units = selectedFood!!.allowedUnits.split(",").map { it.trim() }
-
+        selectedFood?.let { food ->
+            val units = food.allowedUnits.split(",").map { it.trim() }
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFF3E5F5))
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                elevation = CardDefaults.cardElevation(4.dp)
             ) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    ExposedDropdownMenuBox(
-                        expanded = expandedUnit,
-                        onExpandedChange = { expandedUnit = it },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
+                    ExposedDropdownMenuBox(expanded = expandedUnit.value, onExpandedChange = { expandedUnit.value = it }) {
                         OutlinedTextField(
                             value = selectedUnit ?: "",
                             onValueChange = {},
                             readOnly = true,
                             label = { Text("Единица") },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedUnit) },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedUnit.value) },
                             modifier = Modifier.menuAnchor()
                         )
-                        ExposedDropdownMenu(
-                            expanded = expandedUnit,
-                            onDismissRequest = { expandedUnit = false }
-                        ) {
+                        ExposedDropdownMenu(expanded = expandedUnit.value, onDismissRequest = { expandedUnit.value = false }) {
                             units.forEach { unit ->
-                                DropdownMenuItem(
-                                    text = { Text(unit) },
-                                    onClick = {
-                                        selectedUnit = unit
-                                        expandedUnit = false
-                                    }
-                                )
+                                DropdownMenuItem(text = { Text(unit) }, onClick = {
+                                    selectedUnit = unit
+                                    expandedUnit.value = false
+                                })
                             }
                         }
                     }
-
                     OutlinedTextField(
                         value = quantityText,
                         onValueChange = { quantityText = it },
@@ -265,16 +215,15 @@ fun MealEntryScreen(
 
         val quantity = quantityText.toDoubleOrNull() ?: 0.0
         val factor = quantity / 100.0
-        val carbs = (selectedFood?.carbs ?: 0.0) * factor
-        val proteins = (selectedFood?.proteins ?: 0.0) * factor
-        val fats = (selectedFood?.fats ?: 0.0) * factor
-        val calories = (selectedFood?.calories ?: 0) * factor
-
         if (selectedFood != null && quantity > 0) {
+            val carbs = (selectedFood?.carbs ?: 0.0) * factor
+            val proteins = (selectedFood?.proteins ?: 0.0) * factor
+            val fats = (selectedFood?.fats ?: 0.0) * factor
+            val calories = (selectedFood?.calories ?: 0) * factor
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF7E6))
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
             ) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Калории: ${"%.1f".format(calories)}")
@@ -295,34 +244,43 @@ fun MealEntryScreen(
 
         val bolusDose: Double? = run {
             val icr = carbRatio
-            val target = targetGlucose
+            val target = userProfile?.targetGlucoseHigh
             val current = currentGlucose.toDoubleOrNull()
             if (icr == null || icr <= 0.0 || current == null) null
             else {
-                val mealInsulin = if (carbs > 0.0) carbs / icr else 0.0
+                val mealInsulin = if (quantity > 0.0) (selectedFood?.carbs ?: 0.0) * (quantity/100.0) / icr else 0.0
                 val correction = if (target != null) (current - target) / 2.0 else 0.0
                 (mealInsulin + correction).coerceAtLeast(0.0)
             }
         }
-
-        bolusDose?.let {
-            Text("Рассчитанная доза: ${"%.1f".format(it)} ЕД")
-        } ?: Text("Недостаточно данных для расчёта дозы")
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            elevation = CardDefaults.cardElevation(4.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(bolusDose?.let { "Рассчитанная доза: ${"%.1f".format(it)} ЕД" } ?: "Недостаточно данных для расчёта дозы")
+            }
+        }
 
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF7E6))
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            elevation = CardDefaults.cardElevation(4.dp)
         ) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                val dateFormat = remember { java.text.SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault()) }
-                Text("⏰ Дата и время приема: ${dateFormat.format(calendar.time)}")
-                DateTimePickerButton(
-                    calendar = calendar,
-                    onDateTimeSelected = { updatedCalendar ->
-                        calendar = updatedCalendar
-                    }
-                )
+            Column(modifier = Modifier.padding(16.dp)) {
+                val dateFormat = remember { SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault()) }
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(
+                        imageVector = Icons.Filled.AccessAlarms,
+                        contentDescription = "Дата и время",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Text("Дата и время: ${dateFormat.format(calendar.time)}")
+                }
+                DateTimePickerButton(calendar = calendar, onDateTimeSelected = { calendar = it })
             }
         }
 
@@ -334,31 +292,31 @@ fun MealEntryScreen(
                     errorMessage = "Заполните все поля корректно"
                     return@Button
                 }
-
                 val entry = FoodEntry(
-                    foodItemId = selectedFood!!.id,
+                    foodTypeId = selectedFood!!.id,
                     quantity = quantityVal,
                     unit = selectedUnit!!,
                     timestamp = calendar.timeInMillis
                 )
-
                 scope.launch {
-                    foodDao.insertFoodEntry(entry)
+                    viewModel.addFoodEntry(entry)
                     onBack()
                 }
             },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF0288D1),
-            ),
-            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.fillMaxWidth().height(56.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
             enabled = isFormValid
         ) {
-            Text("💾 Добавить запись", color = Color.White)
-        }
+            Icon(
+            imageVector = Icons.Filled.Save,
+            contentDescription = "Сохранить запись",
+            tint = Color.White,
+            modifier = Modifier.size(20.dp)
+        )
+            Spacer(Modifier.width(8.dp))
+            Text("Добавить запись", color = Color.White) }
 
-        errorMessage?.let { Text(it, color = Color.Red) }
+        errorMessage?.let { Text(it, color = MaterialTheme.colorScheme.error) }
     }
 }

@@ -2,8 +2,8 @@ package com.example.glucodialog.data.relations
 
 import androidx.room.Embedded
 import androidx.room.Relation
-import com.example.glucodialog.data.InsulinEntry
-import com.example.glucodialog.data.InsulinType
+import com.example.glucodialog.data.local.InsulinEntry
+import com.example.glucodialog.data.local.InsulinType
 
 data class InsulinEntryWithType(
     @Embedded val entry: InsulinEntry,
@@ -11,5 +11,5 @@ data class InsulinEntryWithType(
         parentColumn = "insulinTypeId",
         entityColumn = "id"
     )
-    val type: InsulinType
+    val type: InsulinType?
 )

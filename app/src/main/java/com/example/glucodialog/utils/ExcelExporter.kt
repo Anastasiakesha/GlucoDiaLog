@@ -33,7 +33,6 @@ object ExcelExporter {
         try {
             val allEntries = mutableListOf<List<String>>()
 
-            // === Глюкоза ===
             db.glucoseDao().getAllGlucoseEntriesOnce().forEach {
                 allEntries.add(
                     listOf(
@@ -47,64 +46,59 @@ object ExcelExporter {
                 )
             }
 
-            // === Инсулин ===
             db.insulinDao().getAllInsulinEntriesOnceWithTypes().forEach {
                 allEntries.add(
                     listOf(
                         "Инсулин",
                         dateFormat.format(Date(it.entry.timestamp)),
-                        it.type.name,
+                        it.type?.name ?: "",
                         it.entry.doseUnits.toString(),
                         it.entry.unit
                     )
                 )
             }
 
-            // === Лекарства ===
             db.medicationDao().getAllMedicationEntriesOnceWithTypes().forEach {
                 allEntries.add(
                     listOf(
                         "Лекарство",
                         dateFormat.format(Date(it.entry.timestamp)),
-                        it.type.name,
+                        it.type?.name ?: "",
                         it.entry.dose,
                         it.entry.unit
                     )
                 )
             }
 
-            // === Активность ===
             db.activityDao().getAllActivityEntriesOnceWithTypes().forEach {
                 allEntries.add(
                     listOf(
                         "Активность",
                         dateFormat.format(Date(it.entry.timestamp)),
-                        it.type.name,
+                        it.type?.name ?: "",
                         it.entry.durationMinutes.toString(),
                         "мин"
                     )
                 )
             }
 
-            // === Питание ===
             db.foodDao().getAllFoodEntriesOnceWithItems().forEach {
                 allEntries.add(
                     listOf(
                         "Питание",
                         dateFormat.format(Date(it.entry.timestamp)),
-                        it.foodItem.name,
+                        it.foodItem?.name ?: "",
                         it.entry.quantity.toString(),
                         it.entry.unit,
                         "",
-                        it.foodItem.carbs.toString(),
-                        it.foodItem.calories.toString(),
-                        it.foodItem.proteins.toString(),
-                        it.foodItem.fats.toString()
+                        it.foodItem?.carbs.toString(),
+                        it.foodItem?.calories.toString(),
+                        it.foodItem?.proteins.toString(),
+                        it.foodItem?.fats.toString()
                     )
                 )
             }
 
-            // Сортировка от нового к старому
             allEntries.sortByDescending {
                 try {
                     dateFormat.parse(it[1])?.time ?: 0L
@@ -116,7 +110,6 @@ object ExcelExporter {
             val workbook = Workbook.createWorkbook(file)
             val sheet = workbook.createSheet("Данные", 0)
 
-            // Заголовки
             val headers = listOf(
                 "Тип записи",        // 0
                 "Дата и время",      // 1
@@ -135,7 +128,6 @@ object ExcelExporter {
                 sheet.addCell(Label(col, 0, name))
             }
 
-            // Данные
             allEntries.forEachIndexed { rowIndex, row ->
                 row.forEachIndexed { colIndex, value ->
                     sheet.addCell(Label(colIndex, rowIndex + 1, value))

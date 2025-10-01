@@ -3,6 +3,16 @@ package com.example.glucodialog.data
 import android.content.Context
 import androidx.room.*
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.example.glucodialog.data.local.ActivityEntry
+import com.example.glucodialog.data.local.ActivityType
+import com.example.glucodialog.data.local.FoodEntry
+import com.example.glucodialog.data.local.FoodItem
+import com.example.glucodialog.data.local.GlucoseEntry
+import com.example.glucodialog.data.local.InsulinEntry
+import com.example.glucodialog.data.local.InsulinType
+import com.example.glucodialog.data.local.MedicationEntry
+import com.example.glucodialog.data.local.MedicationType
+import com.example.glucodialog.data.local.UserProfile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -15,6 +25,12 @@ import com.example.glucodialog.data.migrations.MIGRATION_6_7
 import com.example.glucodialog.data.migrations.MIGRATION_7_8
 import com.example.glucodialog.data.migrations.MIGRATION_8_9
 import com.example.glucodialog.data.migrations.MIGRATION_9_10
+import com.example.glucodialog.data.repository.ActivityDao
+import com.example.glucodialog.data.repository.FoodDao
+import com.example.glucodialog.data.repository.GlucoseDao
+import com.example.glucodialog.data.repository.InsulinDao
+import com.example.glucodialog.data.repository.MedicationDao
+import com.example.glucodialog.data.repository.UserProfileDao
 import kotlinx.coroutines.flow.first
 
 @Database(
@@ -76,10 +92,38 @@ abstract class AppDatabase : RoomDatabase() {
             // Предзаполнение продуктов
             db.foodDao().insertAllFoodItems(
                 listOf(
-                    FoodItem(name = "Яблоко", calories = 52, proteins = 0.3, fats = 0.2, carbs = 14.0, allowedUnits = "г"),
-                    FoodItem(name = "Куриная грудка", calories = 165, proteins = 31.0, fats = 3.6, carbs = 0.0, allowedUnits = "г"),
-                    FoodItem(name = "Хлеб", calories = 250, proteins = 8.0, fats = 2.5, carbs = 48.0, allowedUnits = "г"),
-                    FoodItem(name = "Молоко", calories = 60, proteins = 3.2, fats = 3.5, carbs = 4.7, allowedUnits = "г,мл")
+                    FoodItem(
+                        name = "Яблоко",
+                        calories = 52,
+                        proteins = 0.3,
+                        fats = 0.2,
+                        carbs = 14.0,
+                        allowedUnits = "г"
+                    ),
+                    FoodItem(
+                        name = "Куриная грудка",
+                        calories = 165,
+                        proteins = 31.0,
+                        fats = 3.6,
+                        carbs = 0.0,
+                        allowedUnits = "г"
+                    ),
+                    FoodItem(
+                        name = "Хлеб",
+                        calories = 250,
+                        proteins = 8.0,
+                        fats = 2.5,
+                        carbs = 48.0,
+                        allowedUnits = "г"
+                    ),
+                    FoodItem(
+                        name = "Молоко",
+                        calories = 60,
+                        proteins = 3.2,
+                        fats = 3.5,
+                        carbs = 4.7,
+                        allowedUnits = "г,мл"
+                    )
                 )
             )
 

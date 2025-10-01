@@ -35,7 +35,7 @@ fun DropdownSelector(
             readOnly = true,
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
             modifier = Modifier
-                .menuAnchor() // 👈 важно для работы меню
+                .menuAnchor()
                 .fillMaxWidth()
         )
 

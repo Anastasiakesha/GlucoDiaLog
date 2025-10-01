@@ -1,4 +1,4 @@
-package com.example.glucodialog.ui
+package com.example.glucodialog.ui.screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -6,27 +6,35 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccessAlarms
+import androidx.compose.material.icons.filled.Bloodtype
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import com.example.glucodialog.data.repository.GlucoseDao
-import com.example.glucodialog.data.local.GlucoseEntry
-import com.example.glucodialog.data.local.UserProfile
+import androidx.room.util.copy
+import com.example.glucodialog.domain.model.GlucoseEntry
+import com.example.glucodialog.domain.model.UserProfile
 import com.example.glucodialog.ui.components.DateTimePickerButton
 import com.example.glucodialog.ui.constants.Labels.GLUCOSE_UNITS
+import com.example.glucodialog.ui.viewmodel.GlucoseViewModel
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.text.iterator
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GlucoseEntryScreen(
+    viewModel: GlucoseViewModel,
     userProfile: UserProfile?,
-    glucoseDao: GlucoseDao,
     onBack: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
@@ -34,11 +42,10 @@ fun GlucoseEntryScreen(
     var value by remember { mutableStateOf(TextFieldValue("")) }
     var notes by remember { mutableStateOf(TextFieldValue("")) }
     var selectedUnit by remember { mutableStateOf("ммоль/л") }
-
-    var correctionDose by remember { mutableStateOf("Корректирующая доза: —") }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-    var wasTouched by remember { mutableStateOf(false) }
     var calendar by remember { mutableStateOf(Calendar.getInstance()) }
+    var wasTouched by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var correctionDose by remember { mutableStateOf("Корректирующая доза: —") }
 
     fun updateCorrectionDose() {
         val glucoseMmolL = value.text.toDoubleOrNull()?.let { v ->
@@ -75,88 +82,78 @@ fun GlucoseEntryScreen(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Icon(
+                imageVector = Icons.Filled.Bloodtype,
+                contentDescription = "Уровень глюкозы",
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Text(" Уровень глюкозы", style = MaterialTheme.typography.titleLarge)
+        }
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFE0F2FE))
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
         ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Text("💧 Уровень глюкозы", style = MaterialTheme.typography.titleLarge)
-
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 val placeholderText =
                     if (selectedUnit == "ммоль/л") "Введите от 1.5 до 50 ммоль/л"
                     else "Введите от 27 до 900 мг/дл"
 
-                OutlinedTextField(
-                    value = value,
-                    onValueChange = { newValue ->
-                        wasTouched = true
-                        val filtered = newValue.text.filter { it.isDigit() || it == '.' }
-                        val oneDot = buildString {
-                            var dotUsed = false
-                            for (ch in filtered) {
-                                if (ch == '.') {
-                                    if (!dotUsed) {
-                                        append(ch)
-                                        dotUsed = true
+                        OutlinedTextField(
+                            value = value,
+                            onValueChange = {
+                                wasTouched = true
+                                val filtered = it.text.filter { ch -> ch.isDigit() || ch == '.' }
+                                val oneDot = buildString {
+                                    var dotUsed = false
+                                    for (ch in filtered) {
+                                        if (ch == '.' && !dotUsed) {
+                                            append(ch)
+                                            dotUsed = true
+                                        } else if (ch != '.') append(ch)
                                     }
-                                } else append(ch)
-                            }
-                        }
-                        value = TextFieldValue(
-                            text = oneDot,
-                            selection = TextRange(oneDot.length)
-                        )
-                        errorMessage = null
-                        updateCorrectionDose()
-                    },
-                    label = { Text("Значение ($selectedUnit)") },
-                    placeholder = { Text(placeholderText) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .onFocusChanged { focusState ->
-                            if (!focusState.isFocused && wasTouched) {
-                                val numeric = value.text.toDoubleOrNull()
-                                errorMessage = when {
-                                    numeric == null -> "Введите корректное число"
-                                    selectedUnit == "ммоль/л" && numeric !in 1.5..50.0 ->
-                                        "Значение должно быть от 1.5 до 50 ммоль/л"
-                                    selectedUnit == "мг/дл" && numeric !in 27.0..900.0 ->
-                                        "Значение должно быть от 27 до 900 мг/дл"
-                                    else -> null
                                 }
-                            }
-                        },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    isError = wasTouched && errorMessage != null
-                )
+
+                                val cursor = it.selection
+                                val newSelection = TextRange(
+                                    start = oneDot.length.coerceAtMost(cursor.start),
+                                    end = oneDot.length.coerceAtMost(cursor.end)
+                                )
+
+                                value = TextFieldValue(
+                                    text = oneDot,
+                                    selection = newSelection
+                                )
+
+                                errorMessage = null
+                                updateCorrectionDose()
+                            },
+                            label = { Text("Значение ($selectedUnit)") },
+                            placeholder = { Text(placeholderText) },
+                            singleLine = true,
+                            isError = wasTouched && errorMessage != null,
+                            modifier = Modifier.fillMaxWidth(),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        )
 
                 if (wasTouched && errorMessage != null) {
                     Text(
                         text = errorMessage!!,
-                        color = Color.Red,
                         style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+                        color = MaterialTheme.colorScheme.error
                     )
                 }
 
                 var expandedUnit by remember { mutableStateOf(false) }
                 Box {
-                    OutlinedButton(
-                        onClick = { expandedUnit = true },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
+                    OutlinedButton(onClick = { expandedUnit = true }, modifier = Modifier.fillMaxWidth()) {
                         Text(selectedUnit)
                     }
-                    DropdownMenu(
-                        expanded = expandedUnit,
-                        onDismissRequest = { expandedUnit = false }) {
+                    DropdownMenu(expanded = expandedUnit, onDismissRequest = { expandedUnit = false }) {
                         GLUCOSE_UNITS.forEach { unit ->
                             DropdownMenuItem(
                                 text = { Text(unit) },
@@ -174,29 +171,30 @@ fun GlucoseEntryScreen(
                 if (numericValue != null && userProfile != null) {
                     val (valueToCompare, low, high) = when (userProfile.glucoseUnit) {
                         "мг/дл" -> {
-                            val v = if (selectedUnit == "ммоль/л") numericValue * 18.0 else numericValue
+                            val v = if (selectedUnit == "ммоль/л") numericValue * 18 else numericValue
                             Triple(v, userProfile.targetGlucoseLow, userProfile.targetGlucoseHigh)
                         }
                         else -> {
-                            val v = if (selectedUnit == "мг/дл") numericValue / 18.0 else numericValue
+                            val v = if (selectedUnit == "мг/дл") numericValue / 18 else numericValue
                             Triple(v, userProfile.targetGlucoseLow, userProfile.targetGlucoseHigh)
                         }
                     }
 
                     val (statusColor, statusText) = when {
-                        valueToCompare < low -> Color(0xFF3B82F6) to "Низкий"
-                        valueToCompare in low..high -> Color(0xFF16A34A) to "Норма"
+                        valueToCompare < low -> MaterialTheme.colorScheme.primary to "Низкий"
+                        valueToCompare in low..high -> MaterialTheme.colorScheme.secondary to "Норма"
                         valueToCompare <= high + (if (userProfile.glucoseUnit == "мг/дл") 54 else 3) ->
-                            Color(0xFFF59E0B) to "Выше нормы"
-                        else -> Color(0xFFEF4444) to "Очень высокий"
+                            MaterialTheme.colorScheme.tertiary to "Выше нормы"
+                        else -> MaterialTheme.colorScheme.error to "Очень высокий"
                     }
 
                     Box(
                         modifier = Modifier
-                            .background(statusColor, shape = RoundedCornerShape(8.dp))
-                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                            .fillMaxWidth()
+                            .background(statusColor.copy(alpha = 0.1f), shape = RoundedCornerShape(12.dp))
+                            .padding(8.dp)
                     ) {
-                        Text(statusText, color = Color.White)
+                        Text(statusText, color = statusColor, style = MaterialTheme.typography.bodyMedium)
                     }
                 }
             }
@@ -204,13 +202,11 @@ fun GlucoseEntryScreen(
 
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFF3E5F5))
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            elevation = CardDefaults.cardElevation(4.dp)
         ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
                     value = notes,
                     onValueChange = { notes = it },
@@ -218,29 +214,27 @@ fun GlucoseEntryScreen(
                     modifier = Modifier.fillMaxWidth(),
                     maxLines = 3
                 )
-
                 Text(correctionDose, style = MaterialTheme.typography.bodyMedium)
             }
         }
 
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF7E6))
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            elevation = CardDefaults.cardElevation(4.dp)
         ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                val dateFormat =
-                    remember { java.text.SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault()) }
-                Text("⏰ Дата и время замера: ${dateFormat.format(calendar.time)}")
-                DateTimePickerButton(
-                    calendar = calendar,
-                    onDateTimeSelected = { updatedCalendar ->
-                        calendar = updatedCalendar
-                    }
-                )
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                val dateFormat = remember { SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault()) }
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(
+                        imageVector = Icons.Filled.AccessAlarms,
+                        contentDescription = "Дата и время",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Text("Дата и время: ${dateFormat.format(calendar.time)}")
+                }
+                DateTimePickerButton(calendar = calendar, onDateTimeSelected = { calendar = it })
             }
         }
 
@@ -253,10 +247,7 @@ fun GlucoseEntryScreen(
                     timestamp = calendar.timeInMillis,
                     note = notes.text.ifBlank { null }
                 )
-                scope.launch {
-                    glucoseDao.insertGlucoseEntry(entry)
-                    onBack()
-                }
+                scope.launch { viewModel.addEntry(entry) { onBack() } }
                 value = TextFieldValue("")
                 notes = TextFieldValue("")
                 wasTouched = false
@@ -264,11 +255,17 @@ fun GlucoseEntryScreen(
             enabled = canSave,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(50.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0288D1)),
-            shape = RoundedCornerShape(12.dp)
+                .height(56.dp),
+            shape = RoundedCornerShape(16.dp)
         ) {
-            Text("💾 Добавить запись", color = Color.White)
+            Icon(
+                imageVector = Icons.Filled.Save,
+                contentDescription = "Сохранить запись",
+                tint = Color.White,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(Modifier.width(8.dp))
+            Text("Добавить запись", color = Color.White)
         }
     }
 }

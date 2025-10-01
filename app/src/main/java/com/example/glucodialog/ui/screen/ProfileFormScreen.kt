@@ -5,13 +5,21 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.HealthAndSafety
+import androidx.compose.material.icons.filled.LocalHospital
+import androidx.compose.material.icons.filled.MedicalServices
+import androidx.compose.material.icons.filled.Medication
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.example.glucodialog.data.local.UserProfile
+import com.example.glucodialog.domain.model.UserProfile
 import com.example.glucodialog.ui.components.DropdownSelector
 import com.example.glucodialog.ui.components.TimePickerDialog
 import com.example.glucodialog.ui.constants.Labels.DIABETES_TYPE_LABELS
@@ -30,102 +38,73 @@ fun ProfileFormScreen(
     var showTimePicker by remember { mutableStateOf(false) }
     var emailError by remember { mutableStateOf<String?>(null) }
 
-    fun handleChange(field: String, value: String) {
-        formData = when (field) {
-            "email" -> formData.copy(email = value)
-            "name" -> formData.copy(name = value)
-            "gender" -> formData.copy(gender = value)
-            "height" -> formData.copy(height = value.toDoubleOrNull() ?: 0.0)
-            "weight" -> formData.copy(weight = value.toDoubleOrNull() ?: 0.0)
-            "diabetesType" -> formData.copy(diabetesType = value)
-            "targetGlucoseLow" -> formData.copy(targetGlucoseLow = value.toDoubleOrNull() ?: 0.0)
-            "targetGlucoseHigh" -> formData.copy(targetGlucoseHigh = value.toDoubleOrNull() ?: 0.0)
-            "glucoseUnit" -> formData.copy(glucoseUnit = value)
-            "bolusInsulin" -> formData.copy(bolusInsulin = value)
-            "bolusDose" -> formData.copy(bolusDose = value.toDoubleOrNull() ?: 0.0)
-            "basalInsulin" -> formData.copy(basalInsulin = value)
-            "basalDose" -> formData.copy(basalDose = value.toDoubleOrNull() ?: 0.0)
-            "medication" -> formData.copy(medication = value)
-            "medicationDose" -> formData.copy(medicationDose = value.toDoubleOrNull() ?: 0.0)
-            "medicationUnit" -> formData.copy(medicationUnit = value)
-            else -> formData
-        }
-    }
-
-    var weightText by remember { mutableStateOf(formData.weight.toString()) }
-    var heightText by remember { mutableStateOf(formData.height.toString()) }
-    var targetGlucoseLowText by remember { mutableStateOf(formData.targetGlucoseLow.toString()) }
-    var targetGlucoseHighText by remember { mutableStateOf(formData.targetGlucoseHigh.toString()) }
-    var bolusDoseText by remember { mutableStateOf(formData.bolusDose.toString()) }
-    var basalDoseText by remember { mutableStateOf(formData.basalDose.toString()) }
-    var medicationDoseText by remember { mutableStateOf(formData.medicationDose.toString()) }
-
-    val isFormValid by derivedStateOf {
-        emailError == null &&
-                formData.email.isNotBlank() &&
-                formData.name.isNotBlank() &&
-                formData.gender.isNotBlank() &&
-                formData.weight > 0 &&
-                formData.height > 0 &&
-                formData.diabetesType.isNotBlank() &&
-                formData.targetGlucoseLow > 0 &&
-                formData.targetGlucoseHigh > 0 &&
-                formData.glucoseUnit.isNotBlank() &&
-                formData.bolusInsulin.isNotBlank() &&
-                formData.bolusDose > 0 &&
-                formData.basalInsulin.isNotBlank() &&
-                formData.basalDose > 0 &&
-                formData.medication.isNotBlank() &&
-                formData.medicationDose > 0 &&
-                formData.medicationUnit.isNotBlank() &&
-                formData.medicationTimeMinutesFromMidnight != null
-    }
+    val scrollState = rememberScrollState()
+    val colorScheme = MaterialTheme.colorScheme
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(scrollState)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-
-
-        Card(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    "👋 Добро пожаловать! Пожалуйста, введите информацию о себе для дальнейшей работы приложения.",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
+        Card(
+            colors = CardDefaults.cardColors(containerColor = colorScheme.secondaryContainer),
+            elevation = CardDefaults.cardElevation(2.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                "👋 Добро пожаловать! Введите информацию о себе для корректной работы приложения.",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(16.dp),
+                color = colorScheme.onSecondaryContainer
+            )
         }
 
-
-        Card(modifier = Modifier.fillMaxWidth()) {
+        Card(
+            colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceVariant),
+            elevation = CardDefaults.cardElevation(2.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
             Column(
                 modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text("👤 Личная информация", style = MaterialTheme.typography.titleMedium)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Default.AccountCircle,
+                        contentDescription = null,
+                        tint = colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        " Личная информация",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = colorScheme.primary
+                    )
+                }
 
                 OutlinedTextField(
                     value = formData.name,
-                    onValueChange = { handleChange("name", it) },
+                    onValueChange = { formData = formData.copy(name = it) },
                     label = { Text("Имя") },
                     modifier = Modifier.fillMaxWidth()
                 )
 
-
                 OutlinedTextField(
                     value = formData.email,
                     onValueChange = { input ->
-
-                        val filtered = input.filter { it.isLetterOrDigit() || it in listOf('@', '.', '-', '_') }
-                        handleChange("email", filtered)
-
-                        emailError = when {
-                            !filtered.contains("@") -> "Email должен содержать символ @"
-                            else -> null
+                        val filtered = input.filter {
+                            it.isLetterOrDigit() || it in listOf(
+                                '@',
+                                '.',
+                                '-',
+                                '_'
+                            )
                         }
+                        formData = formData.copy(email = filtered)
+                        emailError =
+                            if (!filtered.contains("@")) "Email должен содержать @" else null
                     },
                     label = { Text("Email") },
                     modifier = Modifier.fillMaxWidth(),
@@ -136,9 +115,8 @@ fun ProfileFormScreen(
                 emailError?.let {
                     Text(
                         text = it,
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+                        color = colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
                     )
                 }
 
@@ -146,221 +124,253 @@ fun ProfileFormScreen(
                     label = "Пол",
                     options = mapOf("female" to "Женский", "male" to "Мужской"),
                     selected = formData.gender,
-                    onSelect = { handleChange("gender", it) }
+                    onSelect = { formData = formData.copy(gender = it) }
                 )
 
-                OutlinedTextField(
-                    value = weightText,
-                    onValueChange = { input ->
-                        if (input.matches(Regex("^\\d*\\.?\\d*\$"))) {
-                            weightText = input
-                            formData = formData.copy(weight = input.toDoubleOrNull() ?: 0.0)
-                        }
-                    },
-                    label = { Text("Вес (кг)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .onFocusChanged { focusState ->
-                            if (focusState.isFocused && weightText == "0.0") weightText = ""
-                        }
-                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    OutlinedTextField(
+                        value = if (formData.weight == 0.0) "" else formData.weight.toString(),
+                        onValueChange = { newValue ->
+                            formData = formData.copy(weight = newValue.toDoubleOrNull() ?: 0.0)
+                        },
+                        label = { Text("Вес (кг)") },
+                        placeholder = { Text("0.0") },
+                        modifier = Modifier.weight(1f),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    )
 
-                OutlinedTextField(
-                    value = heightText,
-                    onValueChange = { input ->
-                        if (input.matches(Regex("^\\d*\\.?\\d*\$"))) {
-                            heightText = input
-                            formData = formData.copy(height = input.toDoubleOrNull() ?: 0.0)
-                        }
-                    },
-                    label = { Text("Рост (см)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .onFocusChanged { focusState ->
-                            if (focusState.isFocused && heightText == "0.0") heightText = ""
-                        }
-                )
+                    OutlinedTextField(
+                        value = if (formData.height == 0.0) "" else formData.height.toString(),
+                        onValueChange = { newValue ->
+                            formData = formData.copy(height = newValue.toDoubleOrNull() ?: 0.0)
+                        },
+                        label = { Text("Рост (см)") },
+                        modifier = Modifier.weight(1f),
+                        placeholder = { Text("0.0") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    )
+                }
             }
         }
 
-        Card(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("🏥 Медицинская информация", style = MaterialTheme.typography.titleMedium)
+        Card(
+            colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceVariant),
+            elevation = CardDefaults.cardElevation(2.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Default.HealthAndSafety,
+                        contentDescription = null,
+                        tint = colorScheme.secondary
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        " Медицинская информация",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = colorScheme.secondary
+                    )
+                }
 
                 DropdownSelector(
                     label = "Тип диабета",
                     options = DIABETES_TYPE_LABELS,
                     selected = formData.diabetesType,
-                    onSelect = { handleChange("diabetesType", it) }
+                    onSelect = { formData = formData.copy(diabetesType = it) }
                 )
 
-                OutlinedTextField(
-                    value = targetGlucoseLowText,
-                    onValueChange = { input ->
-                        if (input.matches(Regex("^\\d*\\.?\\d*\$"))) {
-                            targetGlucoseLowText = input
-                            formData = formData.copy(targetGlucoseLow = input.toDoubleOrNull() ?: 0.0)
-                        }
-                    },
-                    label = { Text("Целевой диапазон глюкозы (мин)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxWidth()
-                        .onFocusChanged { focusState ->
-                            if (focusState.isFocused && targetGlucoseLowText == "0.0") targetGlucoseLowText = ""
-                        }
-                )
+                ) {
+                    OutlinedTextField(
+                        value = if (formData.targetGlucoseLow == 0.0) "" else formData.targetGlucoseLow.toString(),
+                        onValueChange = { newValue ->
+                            formData = formData.copy(targetGlucoseLow = newValue.toDoubleOrNull() ?: 0.0)
+                        },
+                        label = { Text("Глюкоза (мин)") },
+                        modifier = Modifier.weight(1f),
+                        placeholder = { Text("0.0") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    )
 
-                OutlinedTextField(
-                    value = targetGlucoseHighText,
-                    onValueChange = { input ->
-                        if (input.matches(Regex("^\\d*\\.?\\d*\$"))) {
-                            targetGlucoseHighText = input
-                            formData = formData.copy(targetGlucoseHigh = input.toDoubleOrNull() ?: 0.0)
-                        }
-                    },
-                    label = { Text("Целевой диапазон глюкозы (макс)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth()
-                        .onFocusChanged { focusState ->
-                            if (focusState.isFocused && targetGlucoseHighText == "0.0") targetGlucoseHighText = ""
-                        }
-                )
+                    OutlinedTextField(
+                        value = if (formData.targetGlucoseHigh == 0.0) "" else formData.targetGlucoseHigh.toString(),
+                        onValueChange = { newValue ->
+                            formData = formData.copy(targetGlucoseHigh = newValue.toDoubleOrNull() ?: 0.0)
+                        },
+                        label = { Text("Глюкоза (макс)") },
+                        modifier = Modifier.weight(1f),
+                        placeholder = { Text("0.0") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    )
+                }
 
                 DropdownSelector(
                     label = "Единица измерения глюкозы",
                     options = GLUCOSE_UNITS_PROFILE,
                     selected = formData.glucoseUnit,
-                    onSelect = { handleChange("glucoseUnit", it) }
+                    onSelect = { formData = formData.copy(glucoseUnit = it) }
                 )
             }
         }
 
-
-        Card(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("💉 Инсулинотерапия", style = MaterialTheme.typography.titleMedium)
-
+        Card(
+            colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceVariant),
+            elevation = CardDefaults.cardElevation(2.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Default.LocalHospital,
+                        contentDescription = null,
+                        tint = colorScheme.tertiary
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        " Инсулинотерапия",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = colorScheme.tertiary
+                    )
+                }
                 OutlinedTextField(
                     value = formData.bolusInsulin,
-                    onValueChange = { handleChange("bolusInsulin", it) },
+                    onValueChange = { formData = formData.copy(bolusInsulin = it) },
                     label = { Text("Болюсный (название)") },
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 OutlinedTextField(
-                    value = bolusDoseText,
-                    onValueChange = { input ->
-                        if (input.matches(Regex("^\\d*\\.?\\d*\$"))) {
-                            bolusDoseText = input
-                            formData = formData.copy(bolusDose = input.toDoubleOrNull() ?: 0.0)
-                        }
+                    value = if (formData.bolusDose == 0.0) "" else formData.bolusDose.toString(),
+                    onValueChange = { newValue ->
+                        formData = formData.copy(bolusDose = newValue.toDoubleOrNull() ?: 0.0)
                     },
-                    label = { Text("Доза болюсного (ед) в сутки") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth()
-                        .onFocusChanged { focusState ->
-                            if (focusState.isFocused && bolusDoseText == "0.0") bolusDoseText = ""
-                        }
+                    label = { Text("Доза болюсного (ед)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("0.0") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
 
                 OutlinedTextField(
                     value = formData.basalInsulin,
-                    onValueChange = { handleChange("basalInsulin", it) },
+                    onValueChange = { formData = formData.copy(basalInsulin = it) },
                     label = { Text("Базальный (название)") },
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 OutlinedTextField(
-                    value = basalDoseText,
-                    onValueChange = { input ->
-                        if (input.matches(Regex("^\\d*\\.?\\d*\$"))) {
-                            basalDoseText = input
-                            formData = formData.copy(basalDose = input.toDoubleOrNull() ?: 0.0)
-                        }
+                    value = if (formData.basalDose == 0.0) "" else formData.basalDose.toString(),
+                    onValueChange = { newValue ->
+                        formData = formData.copy(basalDose = newValue.toDoubleOrNull() ?: 0.0)
                     },
-                    label = { Text("Доза базального (ед) в сутки") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth()
-                        .onFocusChanged { focusState ->
-                            if (focusState.isFocused && basalDoseText == "0.0") basalDoseText = ""
-                        }
+                    label = { Text("Доза базального (ед)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("0.0") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
+
             }
         }
 
-
-        Card(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("💊 Медикаменты", style = MaterialTheme.typography.titleMedium)
+        Card(
+            colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceVariant),
+            elevation = CardDefaults.cardElevation(2.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Default.Medication,
+                        contentDescription = null,
+                        tint = colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        " Медикаменты",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = colorScheme.primary
+                    )
+                }
 
                 OutlinedTextField(
                     value = formData.medication,
-                    onValueChange = { handleChange("medication", it) },
-                    label = { Text("Лекарственный препарат (название)") },
+                    onValueChange = { formData = formData.copy(medication = it) },
+                    label = { Text("Название") },
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 OutlinedTextField(
-                    value = medicationDoseText,
-                    onValueChange = { input ->
-                        if (input.matches(Regex("^\\d*\\.?\\d*\$"))) {
-                            medicationDoseText = input
-                            formData = formData.copy(medicationDose = input.toDoubleOrNull() ?: 0.0)
-                        }
+                    value = if (formData.medicationDose == 0.0) "" else formData.medicationDose.toString(),
+                    onValueChange = { newValue ->
+                        formData = formData.copy(medicationDose = newValue.toDoubleOrNull() ?: 0.0)
                     },
-                    label = { Text("Доза медикаментов") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth()
-                        .onFocusChanged { focusState ->
-                            if (focusState.isFocused && medicationDoseText == "0.0") medicationDoseText = ""
-                        }
+                    label = { Text("Доза") },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("0.0") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
+
 
                 DropdownSelector(
                     label = "Единица",
                     options = MEDICATION_UNITS,
                     selected = formData.medicationUnit,
-                    onSelect = { handleChange("medicationUnit", it) }
+                    onSelect = { formData = formData.copy(medicationUnit = it) }
                 )
 
-                Column {
-                    Text("⏰ Время приема медикаментов", style = MaterialTheme.typography.bodyMedium)
-                    val timeText = formData.medicationTimeMinutesFromMidnight?.let {
-                        val hours = it / 60
-                        val mins = it % 60
-                        "%02d:%02d".format(hours, mins)
-                    } ?: "Выбрать время"
-
-                    Button(onClick = { showTimePicker = true }) {
-                        Text(timeText)
-                    }
+                Button(onClick = { showTimePicker = true }) {
+                    Text(formData.medicationTimeMinutesFromMidnight?.let {
+                        "%02d:%02d".format(it / 60, it % 60)
+                    } ?: "Выбрать время")
                 }
             }
         }
 
-        Button(
+        FilledTonalButton(
             onClick = { onUpdateProfile(formData) },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = isFormValid
+            enabled = emailError == null,
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Text("💾 Сохранить профиль")
-        }
-    }
-
-    if (showTimePicker) {
-        val initialHour = (formData.medicationTimeMinutesFromMidnight ?: 8 * 60) / 60
-        val initialMinute = (formData.medicationTimeMinutesFromMidnight ?: 8 * 60) % 60
-
-        TimePickerDialog(
-            initialHour = initialHour,
-            initialMinute = initialMinute,
-            onDismiss = { showTimePicker = false },
-            onConfirm = { h, m ->
-                formData = formData.copy(medicationTimeMinutesFromMidnight = h * 60 + m)
-                showTimePicker = false
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Save,
+                    contentDescription = "Сохранить профиль",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Text(" Сохранить профиль", style = MaterialTheme.typography.titleLarge)
             }
-        )
+        }
+
+        if (showTimePicker) {
+            val initialHour = (formData.medicationTimeMinutesFromMidnight ?: 8 * 60) / 60
+            val initialMinute = (formData.medicationTimeMinutesFromMidnight ?: 8 * 60) % 60
+
+            TimePickerDialog(
+                initialHour = initialHour,
+                initialMinute = initialMinute,
+                onDismiss = { showTimePicker = false },
+                onConfirm = { h, m ->
+                    formData = formData.copy(medicationTimeMinutesFromMidnight = h * 60 + m)
+                    showTimePicker = false
+                }
+            )
+        }
     }
 }

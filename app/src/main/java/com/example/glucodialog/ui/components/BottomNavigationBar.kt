@@ -2,6 +2,12 @@ package com.example.glucodialog.ui.components
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
@@ -16,20 +22,21 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.glucodialog.MainActivity.Routes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.ui.graphics.vector.ImageVector
 
 data class NavItem(
     val route: String,
     val label: String,
-    val icon: String
+    val icon: ImageVector
 )
 
 @Composable
 fun BottomNavigationBar(navController: NavController) {
     val items = listOf(
-        NavItem(Routes.DASHBOARD, "Дашборд", "🏠"),
-        NavItem(Routes.RECORD_SELECTOR, "Добавить", "➕"),
-        NavItem(Routes.RECORD_HISTORY, "История", "📋"),
-        NavItem(Routes.PROFILE, "Профиль", "👤")
+        NavItem(Routes.DASHBOARD, "Дашборд", Icons.Filled.Home),
+        NavItem(Routes.RECORD_SELECTOR, "Добавить", Icons.Filled.Add),
+        NavItem(Routes.RECORD_HISTORY, "История", Icons.Filled.List),
+        NavItem(Routes.PROFILE, "Профиль", Icons.Filled.Person)
     )
 
     val currentRoute by navController.currentBackStackEntryAsState()
@@ -44,9 +51,9 @@ fun BottomNavigationBar(navController: NavController) {
                 onClick = { navController.navigate(item.route) { launchSingleTop = true } },
                 icon = {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = item.icon,
-                            fontSize = 20.sp
+                        Icon(
+                            imageVector = item.icon,
+                            contentDescription = item.label
                         )
                         Text(
                             text = item.label,

@@ -1,37 +1,42 @@
-package com.example.glucodialog.ui
+package com.example.glucodialog.ui.screen
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccessAlarms
+import androidx.compose.material.icons.filled.MedicalServices
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.example.glucodialog.data.local.InsulinEntry
-import com.example.glucodialog.data.local.InsulinType
-import com.example.glucodialog.data.local.UserProfile
-import com.example.glucodialog.data.repository.InsulinDao
+import com.example.glucodialog.domain.model.InsulinEntry
+import com.example.glucodialog.domain.model.InsulinType
+import com.example.glucodialog.domain.model.UserProfile
 import com.example.glucodialog.ui.components.DateTimePickerButton
 import com.example.glucodialog.ui.constants.Labels.DURATION_OPTIONS
-import kotlinx.coroutines.flow.firstOrNull
+import com.example.glucodialog.ui.viewmodel.InsulinViewModel
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InsulinEntryScreen(
-    insulinDao: InsulinDao,
-    onBack: () -> Unit,
+    viewModel: InsulinViewModel,
     userProfile: UserProfile?,
+    onBack: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
+    val insulinTypes by viewModel.insulinTypes.collectAsState()
 
-    var insulinTypes by remember { mutableStateOf<List<InsulinType>>(emptyList()) }
     var selectedType by remember { mutableStateOf<InsulinType?>(null) }
     var addingNewType by remember { mutableStateOf(false) }
     var newTypeName by remember { mutableStateOf("") }
@@ -49,14 +54,12 @@ fun InsulinEntryScreen(
     var expandedType by remember { mutableStateOf(false) }
     var expandedDuration by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
-        insulinTypes = insulinDao.getAllInsulinTypes().firstOrNull() ?: emptyList()
-        if (insulinTypes.isNotEmpty()) selectedType = insulinTypes[0]
+    LaunchedEffect(insulinTypes) {
+        if (insulinTypes.isNotEmpty() && selectedType == null) selectedType = insulinTypes[0]
     }
 
     val doseValue = dosage.toDoubleOrNull()
     val canSave = selectedType != null && doseValue != null && doseValue > 0
-
     val showDosageError = (dosageFocusedOnce || attemptedSave) && dosage.isNotBlank() && (doseValue == null || doseValue <= 0)
     val showTypeError = (typeFocusedOnce || attemptedSave) && selectedType == null && !addingNewType
 
@@ -65,23 +68,28 @@ fun InsulinEntryScreen(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Icon(
+                imageVector = Icons.Filled.MedicalServices,
+                contentDescription = "Инсулин",
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Text(" Ввод инсулина", style = MaterialTheme.typography.titleLarge)
+        }
+
 
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFE0F2FE))
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            elevation = CardDefaults.cardElevation(4.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("💉 Тип инсулина", style = MaterialTheme.typography.titleLarge)
 
                 if (!addingNewType) {
-                    ExposedDropdownMenuBox(
-                        expanded = expandedType,
-                        onExpandedChange = { expandedType = it },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
+                    ExposedDropdownMenuBox(expanded = expandedType, onExpandedChange = { expandedType = it }) {
                         OutlinedTextField(
                             value = selectedType?.name ?: "",
                             onValueChange = {},
@@ -90,80 +98,44 @@ fun InsulinEntryScreen(
                             isError = showTypeError,
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedType) },
                             modifier = Modifier
+                                .fillMaxWidth()
                                 .menuAnchor()
-                                .onFocusChanged { state ->
-                                    if (!state.isFocused) typeFocusedOnce = true
-                                }
+                                .onFocusChanged { if (!it.isFocused) typeFocusedOnce = true }
                         )
-                        ExposedDropdownMenu(
-                            expanded = expandedType,
-                            onDismissRequest = { expandedType = false }
-                        ) {
+                        ExposedDropdownMenu(expanded = expandedType, onDismissRequest = { expandedType = false }) {
                             insulinTypes.forEach { type ->
                                 DropdownMenuItem(
                                     text = { Text(type.name) },
-                                    onClick = {
-                                        selectedType = type
-                                        expandedType = false
-                                    }
+                                    onClick = { selectedType = type; expandedType = false }
                                 )
                             }
                             DropdownMenuItem(
                                 text = { Text("➕ Добавить новый тип") },
-                                onClick = {
-                                    addingNewType = true
-                                    selectedType = null
-                                    expandedType = false
-                                }
+                                onClick = { addingNewType = true; selectedType = null; expandedType = false }
                             )
                         }
                     }
                     if (showTypeError) {
-                        Text("Выберите тип инсулина", color = Color.Red, style = MaterialTheme.typography.bodySmall)
+                        Text("Выберите тип инсулина", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                     }
                 } else {
-                    // Новый тип
-                    OutlinedTextField(
-                        value = newTypeName,
-                        onValueChange = { newTypeName = it },
-                        label = { Text("Название нового типа") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    ExposedDropdownMenuBox(
-                        expanded = expandedDuration,
-                        onExpandedChange = { expandedDuration = it },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
+                    OutlinedTextField(newTypeName, { newTypeName = it }, label = { Text("Название нового типа") }, modifier = Modifier.fillMaxWidth())
+                    ExposedDropdownMenuBox(expanded = expandedDuration, onExpandedChange = { expandedDuration = it }) {
                         OutlinedTextField(
                             value = selectedDuration ?: "",
                             onValueChange = {},
                             readOnly = true,
                             label = { Text("Продолжительность действия") },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedDuration) },
-                            modifier = Modifier.menuAnchor()
+                            modifier = Modifier.fillMaxWidth().menuAnchor()
                         )
-                        ExposedDropdownMenu(
-                            expanded = expandedDuration,
-                            onDismissRequest = { expandedDuration = false }
-                        ) {
-                            DURATION_OPTIONS.forEach { type ->
-                                DropdownMenuItem(
-                                    text = { Text(type) },
-                                    onClick = {
-                                        selectedDuration = type
-                                        expandedDuration = false
-                                    }
-                                )
+                        ExposedDropdownMenu(expanded = expandedDuration, onDismissRequest = { expandedDuration = false }) {
+                            DURATION_OPTIONS.forEach { option ->
+                                DropdownMenuItem(text = { Text(option) }, onClick = { selectedDuration = option; expandedDuration = false })
                             }
                         }
                     }
-                    OutlinedTextField(
-                        value = newTypeDuration,
-                        onValueChange = { newTypeDuration = it },
-                        label = { Text("Длительность действия (часы)") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    OutlinedTextField(newTypeDuration, { newTypeDuration = it }, label = { Text("Длительность действия (часы)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.fillMaxWidth())
 
                     Button(
                         onClick = {
@@ -172,78 +144,61 @@ fun InsulinEntryScreen(
                                 errorMessage = "Введите корректные данные нового типа"
                                 return@Button
                             }
-                            val type = InsulinType(
-                                name = newTypeName,
-                                type = selectedDuration ?: "обычный",
-                                durationHours = durationHours
-                            )
-                            scope.launch {
-                                insulinDao.insertInsulinType(type)
-                                insulinTypes = insulinDao.getAllInsulinTypes().firstOrNull() ?: emptyList()
-                                selectedType = insulinTypes.last()
-                                addingNewType = false
-                                newTypeName = ""
-                                newTypeDuration = ""
-                                selectedDuration = null
-                                errorMessage = null
-                                typeFocusedOnce = false
-                            }
+
                         },
-                        modifier = Modifier.fillMaxWidth().height(50.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0288D1)),
-                        shape = RoundedCornerShape(12.dp)
+                        modifier = Modifier.fillMaxWidth().height(56.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                     ) {
                         Text("Сохранить новый тип", color = Color.White)
                     }
+
                 }
             }
         }
 
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFF3E5F5))
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            elevation = CardDefaults.cardElevation(4.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
                     value = dosage,
-                    onValueChange = {
-                        dosage = it
-                        errorMessage = null
-                    },
+                    onValueChange = { dosage = it; errorMessage = null },
                     label = { Text("Дозировка (единицы)") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     isError = showDosageError,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .onFocusChanged { state ->
-                            if (!state.isFocused) dosageFocusedOnce = true
-                        }
+                    modifier = Modifier.fillMaxWidth().onFocusChanged { if (!it.isFocused) dosageFocusedOnce = true }
                 )
                 if (showDosageError) {
-                    Text("Введите корректную дозировку", color = Color.Red, style = MaterialTheme.typography.bodySmall)
+                    Text("Введите корректную дозировку", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                 }
             }
         }
 
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF7E6))
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            elevation = CardDefaults.cardElevation(4.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                val dateFormat = remember { java.text.SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault()) }
-                Text("⏰ Дата и время приема: ${dateFormat.format(calendar.time)}")
-                DateTimePickerButton(
-                    calendar = calendar,
-                    onDateTimeSelected = { updatedCalendar ->
-                        calendar = updatedCalendar
-                    }
-                )
+                val dateFormat = remember { SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault()) }
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(
+                        imageVector = Icons.Filled.AccessAlarms,
+                        contentDescription = "Дата и время",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Text("Дата и время: ${dateFormat.format(calendar.time)}")
+                }
+                DateTimePickerButton(calendar = calendar, onDateTimeSelected = { calendar = it })
             }
         }
 
-        errorMessage?.let { Text(it, color = Color.Red) }
+        errorMessage?.let { Text(it, color = MaterialTheme.colorScheme.error) }
 
         Button(
             onClick = {
@@ -261,10 +216,7 @@ fun InsulinEntryScreen(
                     unit = "Ед",
                     timestamp = calendar.timeInMillis
                 )
-                scope.launch {
-                    insulinDao.insertInsulinEntry(entry)
-                    onBack()
-                }
+                scope.launch { viewModel.addInsulinEntry(entry); onBack() }
                 dosage = ""
                 dosageFocusedOnce = false
                 typeFocusedOnce = false
@@ -272,11 +224,18 @@ fun InsulinEntryScreen(
                 errorMessage = null
             },
             enabled = canSave,
-            modifier = Modifier.fillMaxWidth().height(50.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0288D1)),
-            shape = RoundedCornerShape(12.dp)
+            modifier = Modifier.fillMaxWidth().height(56.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
         ) {
-            Text("💾 Добавить запись", color = Color.White)
+            Icon(
+                imageVector = Icons.Filled.Save,
+                contentDescription = "Сохранить запись",
+                tint = Color.White,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(Modifier.width(8.dp))
+            Text("Добавить запись", color = Color.White)
         }
     }
 }

@@ -52,7 +52,6 @@ fun DateTimePickerButton(
                     TimePickerDialog(
                         context,
                         { _, hourOfDay, minute ->
-                            // Если пользователь выбрал слишком позднее время для сегодняшнего дня
                             val safeHour = if (hourOfDay > maxHour) maxHour else hourOfDay
                             val safeMinute = if (hourOfDay == maxHour && minute > maxMinute) maxMinute else minute
 
@@ -83,7 +82,7 @@ fun DateTimePickerButton(
             .height(50.dp)
     ) {
         Text(
-            text = "⏰ ${dateFormat.format(calendar.time)}",
+            text = " ${dateFormat.format(calendar.time)}",
             style = MaterialTheme.typography.bodyMedium,
             color = Color(0xFF0D47A1)
         )
