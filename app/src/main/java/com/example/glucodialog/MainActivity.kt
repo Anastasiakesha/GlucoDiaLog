@@ -37,7 +37,7 @@ import com.example.glucodialog.domain.usecase.glucose.*
 import com.example.glucodialog.domain.usecase.insulin.*
 import com.example.glucodialog.ui.components.BottomNavigationBar
 import com.example.glucodialog.ui.screen.*
-import com.example.glucodialog.ui.screens.Dashboard
+import com.example.glucodialog.ui.screen.Dashboard
 import com.example.glucodialog.ui.theme.GlucoDialogTheme
 import com.example.glucodialog.ui.viewmodel.ActivityEntryViewModel
 import com.example.glucodialog.ui.viewmodel.ActivityEntryViewModelFactory

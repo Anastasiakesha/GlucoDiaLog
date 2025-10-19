@@ -44,7 +44,7 @@ object PdfExporter {
         val headerPaint = Paint().apply { color = Color.BLACK; textSize = 16f; isFakeBoldText = true }
         val backgroundPaint = Paint()
 
-        val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create() // A4
+        val pageInfo = PdfDocument.PageInfo.Builder(1000, 595, 1).create() // A4 landscape
         var page = pdfDocument.startPage(pageInfo)
         var canvas: Canvas = page.canvas
         var yPosition = 50f
@@ -82,7 +82,7 @@ object PdfExporter {
 
             val headers = listOf(
                 "Тип записи", "Дата", "Название",
-                "Кол-во", "Ед", "Предупреждения",
+                "Кол-во", "Ед", "Прим.",
                 "Углеводы", "Калории", "Белки", "Жиры"
             )
             drawRow(headers, isHeader = true)

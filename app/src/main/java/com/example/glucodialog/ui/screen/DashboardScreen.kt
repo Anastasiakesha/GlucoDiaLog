@@ -1,4 +1,4 @@
-package com.example.glucodialog.ui.screens
+package com.example.glucodialog.ui.screen
 
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animate
@@ -46,7 +46,8 @@ fun Dashboard(
     val alpha = animationProgress
     val offsetY = (1 - animationProgress) * 50f
 
-    val recentGlucose = glucoseEntries.takeLast(10)
+    val recentGlucose = glucoseEntries.sortedBy { it.timestamp }.takeLast(10)
+    val latestGlucose = glucoseEntries.maxByOrNull { it.timestamp }
     val averageGlucose = if (recentGlucose.isNotEmpty()) recentGlucose.map { it.glucoseLevel }.average().toFloat() else 0f
     val inRangeCount = recentGlucose.count { it.glucoseLevel in 4.0..7.0 }
     val timeInRange = if (recentGlucose.isNotEmpty()) inRangeCount.toFloat() / recentGlucose.size * 100 else 0f
@@ -111,8 +112,8 @@ fun Dashboard(
         ) {
             DashboardStatCard(
                 icon = Icons.Filled.Bloodtype,
-                title = "Текущий уровень",
-                value = recentGlucose.lastOrNull()?.let { "${it.glucoseLevel} ${it.unit}" } ?: "Нет данных",
+                title = "Последняя запись",
+                value = latestGlucose?.let { "${it.glucoseLevel} ${it.unit}" } ?: "Нет данных",
                 subtitle = glucoseStatus(recentGlucose.lastOrNull()?.glucoseLevel),
                 color = when (glucoseStatus(recentGlucose.lastOrNull()?.glucoseLevel)) {
                     "Низкий" -> lowColor
