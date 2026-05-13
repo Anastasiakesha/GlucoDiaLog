@@ -48,7 +48,7 @@ interface ActivityDao {
     fun getAllActivityEntriesWithTypesFlow(): Flow<List<ActivityEntryWithType>>
 
     @Insert(onConflict = OnConflictStrategy.Companion.REPLACE)
-    suspend fun insertActivityType(type: ActivityType)
+    suspend fun insertActivityType(type: ActivityType): Long
 
     @Update
     suspend fun updateActivityEntry(entry: ActivityEntry)

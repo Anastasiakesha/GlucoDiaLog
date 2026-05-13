@@ -48,8 +48,9 @@ class ActivityEntryViewModel(
         }
     }
 
-    fun addActivityType(type: ActivityType) = viewModelScope.launch {
-        insertActivityTypeUseCase(type)
+    fun addActivityType(type: ActivityType, onComplete: (Int) -> Unit = {}) = viewModelScope.launch {
+        val insertedId = insertActivityTypeUseCase(type).toInt()
+        onComplete(insertedId)
     }
 
     fun addAllActivityTypes(types: List<ActivityType>) = viewModelScope.launch {
