@@ -145,6 +145,30 @@ fun InsulinEntryScreen(
                                 return@Button
                             }
 
+                            scope.launch {
+                                viewModel.addInsulinType(
+                                    InsulinType(
+                                        name = newTypeName,
+                                        type = "default",
+                                        durationHours = durationHours
+                                    )
+                                ) { insertedId ->
+
+                                    selectedType = InsulinType(
+                                        id = insertedId,
+                                        name = newTypeName,
+                                        type = "default",
+                                        durationHours = durationHours
+                                    )
+
+                                    addingNewType = false
+
+                                    newTypeName = ""
+                                    newTypeDuration = ""
+                                    selectedDuration = null
+                                    errorMessage = null
+                                }
+                            }
                         },
                         modifier = Modifier.fillMaxWidth().height(56.dp),
                         shape = RoundedCornerShape(16.dp),

@@ -84,22 +84,20 @@ class InsulinViewModel(
     }
     fun addInsulinEntryWithNewType(
         typeName: String,
-        typeCategory: String, // можно задать дефолт
-        durationHours: Int,            // дефолтная длительность
+        typeCategory: String,
+        durationHours: Int,
         doseUnits: Double,
         unit: String,
         onComplete: () -> Unit = {}
     ) = viewModelScope.launch {
-        // Вставляем новый тип
         val newTypeId = insertInsulinTypeUseCase(
             InsulinType(
                 name = typeName,
                 type = typeCategory,
                 durationHours = durationHours
             )
-        ).toInt() // Room вернёт новый ID
+        ).toInt()
 
-        // Создаём запись с этим типом
         val newEntry = InsulinEntry(
             insulinTypeId = newTypeId,
             doseUnits = doseUnits,
@@ -109,7 +107,6 @@ class InsulinViewModel(
 
         insertInsulinEntryUseCase(newEntry)
 
-        // Callback
         onComplete()
     }
     suspend fun getAllEntriesOnce(): List<InsulinEntry> = getAllInsulinEntriesOnceUseCase()
