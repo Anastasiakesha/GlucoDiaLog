@@ -48,8 +48,9 @@ class MedicationViewModel(
         }
     }
 
-    fun addMedicationType(type: MedicationType) = viewModelScope.launch {
-        insertMedicationTypeUseCase(type)
+    fun addMedicationType(type: MedicationType, onComplete: (Int) -> Unit = {}) = viewModelScope.launch {
+        val insertedId = insertMedicationTypeUseCase(type).toInt()
+        onComplete(insertedId)
     }
 
     fun addAllMedicationTypes(types: List<MedicationType>) = viewModelScope.launch {

@@ -12,7 +12,7 @@ interface MedicationRepository {
     fun getAllMedicationEntries(): Flow<List<MedicationEntry>>
     suspend fun getMedicationById(id: Int): MedicationType?
     suspend fun getAllMedicationEntriesOnce(): List<MedicationEntry>
-    suspend fun insertMedicationType(type: MedicationType)
+    suspend fun insertMedicationType(type: MedicationType): Long
     fun getAllMedicationEntriesWithTypesFlow(): Flow<List<MedicationEntryWithTypeDomain>>
     suspend fun getAllMedicationEntriesOnceWithTypes(): List<MedicationEntryWithTypeDomain>
     suspend fun getMedicationTypeByName(name: String): MedicationType?

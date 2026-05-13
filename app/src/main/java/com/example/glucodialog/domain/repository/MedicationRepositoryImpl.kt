@@ -18,8 +18,8 @@ class MedicationRepositoryImpl(
     override fun getAllMedicationTypes(): Flow<List<MedicationType>> =
         dao.getAllMedicationTypes().map { list -> list.map { it.toDomain() } }
 
-    override suspend fun insertMedicationType(type: MedicationType) {
-        dao.insertMedicationType(type.toLocal())
+    override suspend fun insertMedicationType(type: MedicationType): Long {
+        return dao.insertMedicationType(type.toLocal())
     }
 
     override suspend fun insertAllMedicationTypes(types: List<MedicationType>) {

@@ -48,7 +48,7 @@ interface MedicationDao {
     fun getAllMedicationEntriesWithTypesFlow(): Flow<List<MedicationEntryWithType>>
 
     @Insert(onConflict = OnConflictStrategy.Companion.REPLACE)
-    suspend fun insertMedicationType(type: MedicationType)
+    suspend fun insertMedicationType(type: MedicationType): Long
 
     @Update
     suspend fun updateMedicationEntry(entry: MedicationEntry)

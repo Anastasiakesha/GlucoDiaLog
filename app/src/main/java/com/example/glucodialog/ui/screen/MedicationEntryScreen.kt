@@ -128,14 +128,22 @@ fun MedicationEntryScreen(
                                 errorMessage = "Введите название препарата"
                                 return@Button
                             }
-                            val type = MedicationType(name = newTypeName)
+
                             scope.launch {
-                                viewModel.addMedicationType(type)
-                                selectedType = type
-                                addingNewType = false
-                                newTypeName = ""
-                                typeTouched = false
-                                errorMessage = null
+                                viewModel.addMedicationType(
+                                    MedicationType(name = newTypeName)
+                                ) { insertedId ->
+
+                                    selectedType = MedicationType(
+                                        id = insertedId,
+                                        name = newTypeName
+                                    )
+
+                                    addingNewType = false
+                                    newTypeName = ""
+                                    typeTouched = false
+                                    errorMessage = null
+                                }
                             }
                         },
                         modifier = Modifier.fillMaxWidth().height(56.dp),
