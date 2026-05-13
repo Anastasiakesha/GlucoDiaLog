@@ -21,3 +21,4 @@ object Labels {
 
     val DURATION_OPTIONS = listOf("Короткий", "Средний", "Длинный")
 }
+

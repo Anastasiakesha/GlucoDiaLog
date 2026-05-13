@@ -344,7 +344,7 @@ class MainActivity : ComponentActivity() {
                                             when (currentRoute) {
                                                 Routes.DASHBOARD -> "Панель управления"
                                                 Routes.PROFILE -> "Профиль"
-                                                Routes.PROFILE_FORM -> "Редактирование профиля"
+                                                Routes.PROFILE_FORM -> "Заполнение профиля"
                                                 Routes.RECORD_SELECTOR -> "Добавить запись"
                                                 Routes.RECORD_HISTORY -> "История записей"
                                                 else -> "GlucoDiaLog"
@@ -507,7 +507,7 @@ class MainActivity : ComponentActivity() {
                                     }
 
                                     composable(Routes.MEDICATION) {
-//
+
                                         MedicationEntryScreen(
                                             viewModel = medicationViewModel,
                                             onBack = { navController.popBackStack() }
