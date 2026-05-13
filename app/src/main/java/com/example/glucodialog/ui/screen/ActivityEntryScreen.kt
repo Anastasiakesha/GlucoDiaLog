@@ -16,12 +16,15 @@ import androidx.compose.ui.unit.dp
 import com.example.glucodialog.ui.components.DateTimePickerButton
 import java.util.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import com.example.glucodialog.domain.model.ActivityEntry
 import com.example.glucodialog.domain.model.ActivityType
 import com.example.glucodialog.ui.viewmodel.ActivityEntryViewModel
 import java.text.SimpleDateFormat
 import androidx.compose.ui.text.input.KeyboardType
+import com.example.glucodialog.domain.model.MedicationType
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,7 +32,9 @@ fun ActivityEntryScreen(
     viewModel: ActivityEntryViewModel,
     onBack: () -> Unit
 ) {
+    val scope = rememberCoroutineScope()
     val activityTypes by viewModel.activityTypes.collectAsState()
+    var typeTouched by remember { mutableStateOf(false) }
     var selectedType by remember { mutableStateOf<ActivityType?>(activityTypes.firstOrNull()) }
     var durationMinutes by remember { mutableStateOf("") }
     var calendar by remember { mutableStateOf(Calendar.getInstance()) }
@@ -37,8 +42,10 @@ fun ActivityEntryScreen(
     var addingNewType by remember { mutableStateOf(false) }
     var newTypeName by remember { mutableStateOf("") }
     var expandedType by remember { mutableStateOf(false) }
+    var attemptedSave by remember { mutableStateOf(false) }
 
     val canSave = selectedType != null && durationMinutes.toIntOrNull()?.let { it > 0 } == true
+    val showTypeError = (typeTouched || attemptedSave) && selectedType == null && !addingNewType
 
     Column(
         modifier = Modifier
@@ -70,6 +77,7 @@ fun ActivityEntryScreen(
                         expanded = expandedType,
                         onExpandedChange = { expandedType = !expandedType },
                         modifier = Modifier.fillMaxWidth()
+                            .onFocusChanged { if (!it.isFocused) typeTouched = true }
                     ) {
                         OutlinedTextField(
                             value = selectedType?.name ?: "",
@@ -114,17 +122,28 @@ fun ActivityEntryScreen(
                     )
                     Button(
                         onClick = {
-                            if (newTypeName.isNotBlank()) {
-                                val type = ActivityType(name = newTypeName)
-                                viewModel.addActivityType(type)
-                                selectedType = type
-                                addingNewType = false
-                                newTypeName = ""
-                                errorMessage = null
-                            } else {
-                                errorMessage = "Введите название новой активности"
+                            if (newTypeName.isBlank()) {
+                                errorMessage = "Введите название физической активности"
+                                return@Button
+                            }
+                            scope.launch {
+                                viewModel.addActivityType(
+                                    ActivityType(name = newTypeName)
+                                ) { insertedId ->
+
+                                    selectedType = ActivityType(
+                                        id = insertedId,
+                                        name = newTypeName
+                                    )
+
+                                    addingNewType = false
+                                    newTypeName = ""
+                                    typeTouched = false
+                                    errorMessage = null
+                                }
                             }
                         },
+
                         modifier = Modifier.fillMaxWidth().height(56.dp),
                         shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)

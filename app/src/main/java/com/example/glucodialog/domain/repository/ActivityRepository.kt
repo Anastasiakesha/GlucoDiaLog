@@ -17,7 +17,7 @@ interface ActivityRepository {
     suspend fun getActivityTypeByName(name: String): ActivityType?
     suspend fun getActivitiesBetween(startTimestamp: Long, endTimestamp: Long): List<ActivityEntry>
     fun getAllActivityEntriesWithTypesFlow(): Flow<List<ActivityEntryWithTypeDomain>>
-    suspend fun insertActivityType(type: ActivityType)
+    suspend fun insertActivityType(type: ActivityType): Long
     suspend fun updateActivityEntry(entry: ActivityEntry)
     suspend fun deleteActivityEntry(entry: ActivityEntry)
 }
