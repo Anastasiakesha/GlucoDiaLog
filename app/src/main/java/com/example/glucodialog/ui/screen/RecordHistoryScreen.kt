@@ -24,6 +24,7 @@ import com.example.glucodialog.ui.viewmodel.*
 import java.text.SimpleDateFormat
 import java.util.*
 import android.util.Log
+import androidx.compose.material.icons.filled.FavoriteBorder
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,6 +45,8 @@ fun RecordHistoryScreen(
     activityViewModel: ActivityEntryViewModel,
     glucoseViewModel: GlucoseViewModel,
     medicationViewModel: MedicationViewModel,
+    bloodPressureRecords: List<BloodPressureEntry>,
+    bloodPressureViewModel: BloodPressureViewModel
 ) {
     var searchTerm by remember { mutableStateOf("") }
     var dateFilter by remember { mutableStateOf("all") }
@@ -57,7 +60,8 @@ fun RecordHistoryScreen(
         "meal" to Color(0xFFFF9800),
         "insulin" to Color(0xFF2E7D32),
         "activity" to Color(0xFF7B1FA2),
-        "medication" to Color(0xFF1976D2)
+        "medication" to Color(0xFF1976D2),
+        "blood_pressure" to Color(0xFFE91E63)
     )
 
     val typeIcons = mapOf(
@@ -65,7 +69,8 @@ fun RecordHistoryScreen(
         "meal" to Icons.Default.Restaurant,
         "insulin" to Icons.Default.LocalHospital,
         "activity" to Icons.Default.DirectionsRun,
-        "medication" to Icons.Default.Medication
+        "medication" to Icons.Default.Medication,
+        "blood_pressure" to Icons.Default.FavoriteBorder
     )
 
     val filteredRecords by remember(
@@ -105,7 +110,8 @@ fun RecordHistoryScreen(
                     meals.map { RecordWrapperDomain(it, "meal") } +
                     insulinRecords.map { RecordWrapperDomain(it, "insulin") } +
                     activityRecords.map { RecordWrapperDomain(it, "activity") } +
-                    medicationRecords.map { RecordWrapperDomain(it, "medication") }
+                    medicationRecords.map { RecordWrapperDomain(it, "medication") } +
+                    bloodPressureRecords.map { RecordWrapperDomain(it, "blood_pressure") }
 
             allRecords.filter { record ->
                 filterByDate(record.timestamp) &&
@@ -143,14 +149,15 @@ fun RecordHistoryScreen(
             }
         }
 
-        val tabs = listOf("all", "glucose", "meal", "insulin", "activity", "medication")
+        val tabs = listOf("all", "glucose", "meal", "insulin", "activity", "medication", "blood_pressure")
         val tabLabels = mapOf(
             "all" to "Все",
             "glucose" to "Глюкоза",
             "meal" to "Еда",
             "insulin" to "Инсулин",
             "activity" to "Активность",
-            "medication" to "Лекарства"
+            "medication" to "Лекарства",
+            "blood_pressure" to "Давление"
         )
 
         Box(
@@ -277,6 +284,11 @@ fun RecordHistoryScreen(
                                     onDelete = { medicationViewModel.deleteMedicationEntry(record.data) },
                                     valueColor = typeTextColors["medication"] ?: MaterialTheme.colorScheme.primaryContainer
                                 )
+                                "blood_pressure" -> BloodPressureCard(
+                                    record = record.data as BloodPressureEntry,
+                                    onDelete = { bloodPressureViewModel.deleteBloodPressureEntry(record.data) },
+                                    valueColor = typeTextColors["blood_pressure"] ?: MaterialTheme.colorScheme.primary
+                                )
                             }
                         }
                     }
@@ -294,6 +306,7 @@ private data class RecordWrapperDomain(val data: Any, val type: String) {
             is InsulinEntryWithTypeDomain -> data.entry.timestamp
             is ActivityEntry -> data.timestamp
             is MedicationEntry -> data.timestamp
+            is BloodPressureEntry -> data.timestamp
             else -> 0L
         }
 
@@ -307,6 +320,7 @@ private data class RecordWrapperDomain(val data: Any, val type: String) {
                         (data.type?.name?.lowercase()?.contains(term) ?: false)
             is ActivityEntry -> data.durationMinutes.toString().contains(term)
             is MedicationEntry -> data.dose.lowercase().contains(term) || data.unit.lowercase().contains(term)
+            is BloodPressureEntry -> data.systolic.toString().contains(term) || data.diastolic.toString().contains(term)
             else -> false
         }
     }

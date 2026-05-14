@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bloodtype
 import androidx.compose.material.icons.filled.DirectionsRun
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.LocalPharmacy
 import androidx.compose.material.icons.filled.MedicalServices
 import androidx.compose.material.icons.filled.Restaurant
@@ -40,6 +41,7 @@ object Routes {
     const val ACTIVITY = "activity"
     const val MEAL = "meal"
     const val MEDICATION = "medication"
+    const val BLOOD_PRESSURE = "blood_pressure"
 }
 
 @SuppressLint("UnusedBoxWithConstraintsScope")
@@ -81,6 +83,13 @@ fun RecordTypeSelector(
             icon = Icons.Default.LocalPharmacy,
             color = Color(0xFF8B5CF6)
         ),
+        RecordType(
+            route = Routes.BLOOD_PRESSURE,
+            title = "Давление",
+            description = "Добавить запись давления",
+            icon = Icons.Default.FavoriteBorder,
+            color = Color(0xFFE91E63)
+        )
     ),
     onSelectScreen: (String) -> Unit,
 ) {

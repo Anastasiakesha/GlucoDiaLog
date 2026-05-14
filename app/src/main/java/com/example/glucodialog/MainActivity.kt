@@ -26,11 +26,15 @@ import com.example.glucodialog.domain.model.InsulinEntryWithTypeDomain
 import com.example.glucodialog.domain.model.MedicationEntryWithTypeDomain
 import com.example.glucodialog.domain.model.UserProfile
 import com.example.glucodialog.domain.repository.ActivityRepositoryImpl
+import com.example.glucodialog.domain.repository.BloodPressureRepositoryImpl
 import com.example.glucodialog.domain.repository.FoodRepositoryImpl
 import com.example.glucodialog.domain.repository.GlucoseRepositoryImpl
 import com.example.glucodialog.domain.repository.InsulinRepositoryImpl
 import com.example.glucodialog.domain.repository.MedicationRepositoryImpl
 import com.example.glucodialog.domain.usecase.activity.*
+import com.example.glucodialog.domain.usecase.bloodpressure.DeleteBloodPressureEntryUseCase
+import com.example.glucodialog.domain.usecase.bloodpressure.GetAllBloodPressureUseCase
+import com.example.glucodialog.domain.usecase.bloodpressure.InsertBloodPressureEntryUseCase
 import com.example.glucodialog.domain.usecase.food.*
 import com.example.glucodialog.domain.usecase.medication.*
 import com.example.glucodialog.domain.usecase.glucose.*
@@ -41,6 +45,8 @@ import com.example.glucodialog.ui.screen.Dashboard
 import com.example.glucodialog.ui.theme.GlucoDialogTheme
 import com.example.glucodialog.ui.viewmodel.ActivityEntryViewModel
 import com.example.glucodialog.ui.viewmodel.ActivityEntryViewModelFactory
+import com.example.glucodialog.ui.viewmodel.BloodPressureViewModel
+import com.example.glucodialog.ui.viewmodel.BloodPressureViewModelFactory
 import com.example.glucodialog.ui.viewmodel.FoodViewModel
 import com.example.glucodialog.ui.viewmodel.FoodViewModelFactory
 import com.example.glucodialog.ui.viewmodel.GlucoseViewModel
@@ -66,6 +72,7 @@ class MainActivity : ComponentActivity() {
         const val ACTIVITY = "activity"
         const val MEAL = "meal"
         const val MEDICATION = "medication"
+        const val BLOOD_PRESSURE = "blood_pressure"
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
@@ -303,6 +310,15 @@ class MainActivity : ComponentActivity() {
                 val medicationRecords by medicationViewModel.medicationEntries.collectAsState()
                 val medicationTypes by medicationViewModel.medicationTypes.collectAsState()
 
+                val bpRepository = BloodPressureRepositoryImpl(db.bloodPressureDao())
+                val bpViewModel: BloodPressureViewModel = viewModel(
+                    factory = BloodPressureViewModelFactory(
+                        InsertBloodPressureEntryUseCase(bpRepository),
+                        GetAllBloodPressureUseCase(bpRepository),
+                        DeleteBloodPressureEntryUseCase(bpRepository)
+                    )
+                )
+                val bpRecords by bpViewModel.entries.collectAsState()
 
                 val glucoseEntries by db.glucoseDao().getAllGlucoseEntries()
                     .collectAsState(initial = emptyList())
@@ -530,6 +546,13 @@ class MainActivity : ComponentActivity() {
                                         )
                                     }
 
+                                    composable(Routes.BLOOD_PRESSURE) {
+                                        BloodPressureEntryScreen(
+                                            viewModel = bpViewModel,
+                                            onBack = { navController.popBackStack() }
+                                        )
+                                    }
+
                                     composable(Routes.RECORD_HISTORY) {
                                         val context = LocalContext.current
                                         val db = AppDatabase.getDatabase(context)
@@ -550,7 +573,9 @@ class MainActivity : ComponentActivity() {
                                             insulinViewModel = insulinViewModel,
                                             activityViewModel = activityViewModel,
                                             glucoseViewModel = glucoseViewModel,
-                                            medicationViewModel = medicationViewModel
+                                            medicationViewModel = medicationViewModel,
+                                            bloodPressureRecords = bpRecords,
+                                            bloodPressureViewModel = bpViewModel
                                         )
                                     }
                                 }

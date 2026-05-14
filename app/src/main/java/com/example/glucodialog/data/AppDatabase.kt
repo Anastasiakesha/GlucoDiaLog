@@ -13,6 +13,7 @@ import com.example.glucodialog.data.local.InsulinType
 import com.example.glucodialog.data.local.MedicationEntry
 import com.example.glucodialog.data.local.MedicationType
 import com.example.glucodialog.data.local.UserProfile
+import com.example.glucodialog.data.local.BloodPressureEntry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -25,7 +26,9 @@ import com.example.glucodialog.data.migrations.MIGRATION_6_7
 import com.example.glucodialog.data.migrations.MIGRATION_7_8
 import com.example.glucodialog.data.migrations.MIGRATION_8_9
 import com.example.glucodialog.data.migrations.MIGRATION_9_10
+import com.example.glucodialog.data.migrations.MIGRATION_10_11
 import com.example.glucodialog.data.repository.ActivityDao
+import com.example.glucodialog.data.repository.BloodPressureDao
 import com.example.glucodialog.data.repository.FoodDao
 import com.example.glucodialog.data.repository.GlucoseDao
 import com.example.glucodialog.data.repository.InsulinDao
@@ -40,9 +43,10 @@ import kotlinx.coroutines.flow.first
         GlucoseEntry::class,
         InsulinEntry::class, InsulinType::class,
         MedicationEntry::class, MedicationType::class,
-        UserProfile::class
+        UserProfile::class,
+        BloodPressureEntry::class
     ],
-    version = 10,
+    version = 11,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -53,6 +57,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun insulinDao(): InsulinDao
     abstract fun medicationDao(): MedicationDao
     abstract fun userProfileDao(): UserProfileDao
+    abstract fun bloodPressureDao(): BloodPressureDao
 
 
     companion object {
@@ -66,7 +71,9 @@ abstract class AppDatabase : RoomDatabase() {
                     "gluco_database"
                 )
 //                  .fallbackToDestructiveMigration(true)
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10,
+                        MIGRATION_10_11
+                    )
                     .addCallback(AppDatabaseCallback())
                     .build()
                 INSTANCE = instance
