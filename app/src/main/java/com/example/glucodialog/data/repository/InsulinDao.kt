@@ -18,6 +18,9 @@ interface InsulinDao {
     @Query("SELECT * FROM insulin_types")
     fun getAllInsulinTypes(): Flow<List<InsulinType>>
 
+    @Query("SELECT * FROM insulin_entries WHERE id = :id LIMIT 1")
+    suspend fun getInsulinEntryById(id: Int): InsulinEntry?
+
     @Insert(onConflict = OnConflictStrategy.Companion.REPLACE)
     suspend fun insertAllInsulinTypes(types: List<InsulinType>)
 

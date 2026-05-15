@@ -17,6 +17,9 @@ class InsulinRepositoryImpl(
     override fun getAllInsulinTypes(): Flow<List<InsulinType>> =
         dao.getAllInsulinTypes().map { it.map { it.toDomain() } }
 
+    override suspend fun getInsulinEntryById(id: Int): InsulinEntry? =
+        dao.getInsulinEntryById(id)?.toDomain()
+
     override suspend fun insertInsulinType(type: InsulinType): Long {
         return dao.insertInsulinType(type.toLocal())
     }

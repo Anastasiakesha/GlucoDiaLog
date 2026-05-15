@@ -3,6 +3,7 @@ package com.example.glucodialog.ui.components
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,6 +20,7 @@ import java.util.Locale
 @Composable
 fun InsulinCard(
     record: InsulinEntryWithTypeDomain,
+    onEdit: () -> Unit,
     onDelete: (InsulinEntry) -> Unit,
     valueColor: Color = Color.Black
 ) {
@@ -57,6 +59,9 @@ fun InsulinCard(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+            }
+            IconButton(onClick = onEdit) {
+                Icon(Icons.Default.Edit, contentDescription = "Редактировать", tint = MaterialTheme.colorScheme.primary)
             }
 
             IconButton(

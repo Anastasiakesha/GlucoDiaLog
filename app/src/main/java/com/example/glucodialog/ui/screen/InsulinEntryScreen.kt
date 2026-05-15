@@ -32,6 +32,7 @@ import java.util.*
 fun InsulinEntryScreen(
     viewModel: InsulinViewModel,
     userProfile: UserProfile?,
+    entryId: Int = -1,
     onBack: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
@@ -54,8 +55,19 @@ fun InsulinEntryScreen(
     var expandedType by remember { mutableStateOf(false) }
     var expandedDuration by remember { mutableStateOf(false) }
 
-    LaunchedEffect(insulinTypes) {
-        if (insulinTypes.isNotEmpty() && selectedType == null) selectedType = insulinTypes[0]
+    LaunchedEffect(entryId, insulinTypes) {
+        if (insulinTypes.isNotEmpty()) {
+            if (entryId != -1) {
+                val entryToEdit = viewModel.getEntryById(entryId)
+                entryToEdit?.let { entry ->
+                    selectedType = insulinTypes.find { it.id == entry.insulinTypeId }
+                    dosage = entry.doseUnits.toString()
+                    calendar = Calendar.getInstance().apply { timeInMillis = entry.timestamp }
+                }
+            } else if (selectedType == null) {
+                selectedType = insulinTypes.first()
+            }
+        }
     }
 
     val doseValue = dosage.toDoubleOrNull()
@@ -235,12 +247,20 @@ fun InsulinEntryScreen(
                     return@Button
                 }
                 val entry = InsulinEntry(
+                    id = if (entryId != -1) entryId else 0,
                     insulinTypeId = selectedType!!.id,
                     doseUnits = doseValueNonNull!!,
                     unit = "Ед",
                     timestamp = calendar.timeInMillis
                 )
-                scope.launch { viewModel.addInsulinEntry(entry); onBack() }
+                scope.launch {
+                    if (entryId != -1) {
+                        viewModel.updateInsulinEntry(entry)
+                    } else {
+                        viewModel.addInsulinEntry(entry)
+                    }
+                    onBack()
+                }
                 dosage = ""
                 dosageFocusedOnce = false
                 typeFocusedOnce = false
@@ -259,7 +279,7 @@ fun InsulinEntryScreen(
                 modifier = Modifier.size(20.dp)
             )
             Spacer(Modifier.width(8.dp))
-            Text("Добавить запись", color = Color.White)
+            Text(if (entryId != -1) "Сохранить изменения" else "Добавить запись", color = Color.White)
         }
     }
 }

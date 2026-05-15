@@ -28,7 +28,8 @@ class InsulinViewModel(
     private val getAllInsulinEntriesWithTypesOnceUseCase: GetAllInsulinEntriesWithTypesOnceUseCase,
     private val getInsulinEntriesBetweenUseCase: GetInsulinEntriesBetweenUseCase,
     private val updateInsulinEntryUseCase: UpdateInsulinEntryUseCase,
-    private val deleteInsulinEntryUseCase: DeleteInsulinEntryUseCase
+    private val deleteInsulinEntryUseCase: DeleteInsulinEntryUseCase,
+    private val getInsulinEntryByIdUseCase: GetInsulinEntryByIdUseCase
 ) : ViewModel() {
 
     private val _insulinTypes = MutableStateFlow<List<InsulinType>>(emptyList())
@@ -64,6 +65,10 @@ class InsulinViewModel(
     fun addInsulinType(type: InsulinType, onComplete: (Int) -> Unit = {}) = viewModelScope.launch {
         val insertedId = insertInsulinTypeUseCase(type).toInt()
         onComplete(insertedId)
+    }
+
+    suspend fun getEntryById(id: Int): InsulinEntry? {
+        return getInsulinEntryByIdUseCase(id)
     }
 
     fun addAllInsulinTypes(types: List<InsulinType>) = viewModelScope.launch {
@@ -134,7 +139,8 @@ class InsulinViewModelFactory(
     private val getAllInsulinEntriesWithTypesOnceUseCase: GetAllInsulinEntriesWithTypesOnceUseCase,
     private val getInsulinEntriesBetweenUseCase: GetInsulinEntriesBetweenUseCase,
     private val updateInsulinEntryUseCase: UpdateInsulinEntryUseCase,
-    private val deleteInsulinEntryUseCase: DeleteInsulinEntryUseCase
+    private val deleteInsulinEntryUseCase: DeleteInsulinEntryUseCase,
+    private val getInsulinEntryByIdUseCase: GetInsulinEntryByIdUseCase
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(InsulinViewModel::class.java)) {
@@ -152,7 +158,8 @@ class InsulinViewModelFactory(
                 getAllInsulinEntriesWithTypesOnceUseCase,
                 getInsulinEntriesBetweenUseCase,
                 updateInsulinEntryUseCase,
-                deleteInsulinEntryUseCase
+                deleteInsulinEntryUseCase,
+                getInsulinEntryByIdUseCase
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")

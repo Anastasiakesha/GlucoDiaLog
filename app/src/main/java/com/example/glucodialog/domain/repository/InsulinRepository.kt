@@ -9,6 +9,8 @@ interface InsulinRepository {
 
     fun getAllInsulinTypes(): Flow<List<InsulinType>>
 
+    suspend fun getInsulinEntryById(id: Int): InsulinEntry?
+
     suspend fun insertInsulinType(type: InsulinType): Long
 
     suspend fun insertAllInsulinTypes(types: List<InsulinType>)
