@@ -25,6 +25,7 @@ import java.util.Calendar
 @Composable
 fun BloodPressureEntryScreen(
     viewModel: BloodPressureViewModel,
+    entryId: Int = -1,
     onBack: () -> Unit
 ) {
     var systolic by remember { mutableStateOf("") }
@@ -39,6 +40,18 @@ fun BloodPressureEntryScreen(
     val canSave = sysVal != null && sysVal in 50..250 &&
             diaVal != null && diaVal in 30..150 &&
             pulseVal != null && pulseVal in 30..200
+
+    LaunchedEffect(entryId) {
+        if (entryId != -1) {
+            val entryToEdit = viewModel.getEntryById(entryId)
+            entryToEdit?.let { entry ->
+                systolic = entry.systolic.toString()
+                diastolic = entry.diastolic.toString()
+                pulse = entry.pulse.toString()
+                calendar = Calendar.getInstance().apply { timeInMillis = entry.timestamp }
+            }
+        }
+    }
 
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
@@ -92,9 +105,17 @@ fun BloodPressureEntryScreen(
             onClick = {
                 if (canSave) {
                     val entry = BloodPressureEntry(
-                        systolic = sysVal!!, diastolic = diaVal!!, pulse = pulseVal!!, timestamp = calendar.timeInMillis
+                        id = if (entryId != -1) entryId else 0,
+                        systolic = sysVal!!,
+                        diastolic = diaVal!!,
+                        pulse = pulseVal!!,
+                        timestamp = calendar.timeInMillis
                     )
-                    viewModel.addBloodPressureEntry(entry, onComplete = onBack)
+                    if (entryId != -1) {
+                        viewModel.updateBloodPressureEntry(entry, onComplete = onBack)
+                    } else {
+                        viewModel.addBloodPressureEntry(entry, onComplete = onBack)
+                    }
                 }
             },
             enabled = canSave,
@@ -103,7 +124,7 @@ fun BloodPressureEntryScreen(
         ) {
             Icon(Icons.Default.Save, contentDescription = "Сохранить", tint = Color.White)
             Spacer(Modifier.width(8.dp))
-            Text("Добавить запись", color = Color.White)
+            Text(if (entryId != -1) "Сохранить изменения" else "Добавить запись", color = Color.White)
         }
     }
 }

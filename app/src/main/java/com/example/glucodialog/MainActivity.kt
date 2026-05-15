@@ -36,7 +36,9 @@ import com.example.glucodialog.domain.repository.MedicationRepositoryImpl
 import com.example.glucodialog.domain.usecase.activity.*
 import com.example.glucodialog.domain.usecase.bloodpressure.DeleteBloodPressureEntryUseCase
 import com.example.glucodialog.domain.usecase.bloodpressure.GetAllBloodPressureUseCase
+import com.example.glucodialog.domain.usecase.bloodpressure.GetBloodPressureEntryByIdUseCase
 import com.example.glucodialog.domain.usecase.bloodpressure.InsertBloodPressureEntryUseCase
+import com.example.glucodialog.domain.usecase.bloodpressure.UpdateBloodPressureUseCase
 import com.example.glucodialog.domain.usecase.food.*
 import com.example.glucodialog.domain.usecase.medication.*
 import com.example.glucodialog.domain.usecase.glucose.*
@@ -332,7 +334,9 @@ class MainActivity : ComponentActivity() {
                     factory = BloodPressureViewModelFactory(
                         InsertBloodPressureEntryUseCase(bpRepository),
                         GetAllBloodPressureUseCase(bpRepository),
-                        DeleteBloodPressureEntryUseCase(bpRepository)
+                        DeleteBloodPressureEntryUseCase(bpRepository),
+                        UpdateBloodPressureUseCase(bpRepository),
+                        GetBloodPressureEntryByIdUseCase(bpRepository)
                     )
                 )
                 val bpRecords by bpViewModel.entries.collectAsState()
@@ -589,9 +593,15 @@ class MainActivity : ComponentActivity() {
                                         )
                                     }
 
-                                    composable(Routes.BLOOD_PRESSURE) {
+                                    composable(
+                                        route = "${Routes.BLOOD_PRESSURE}?id={id}",
+                                        arguments = listOf(navArgument("id") { type = NavType.IntType; defaultValue = -1 })
+                                    ) { backStackEntry ->
+                                        val id = backStackEntry.arguments?.getInt("id") ?: -1
+
                                         BloodPressureEntryScreen(
                                             viewModel = bpViewModel,
+                                            entryId = id,
                                             onBack = { navController.popBackStack() }
                                         )
                                     }

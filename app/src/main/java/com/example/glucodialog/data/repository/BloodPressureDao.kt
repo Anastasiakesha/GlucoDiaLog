@@ -13,6 +13,9 @@ interface BloodPressureDao {
     @Insert
     suspend fun insertBloodPressureEntry(entry: BloodPressureEntry)
 
+    @Query("SELECT * FROM blood_pressure_entries WHERE id = :id LIMIT 1")
+    suspend fun getBloodPressureEntryById(id: Int): BloodPressureEntry?
+
     @Query("SELECT * FROM blood_pressure_entries ORDER BY timestamp DESC")
     fun getAllEntries(): Flow<List<BloodPressureEntry>>
 

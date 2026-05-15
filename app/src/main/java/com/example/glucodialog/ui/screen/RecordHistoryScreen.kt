@@ -209,7 +209,7 @@ fun RecordHistoryScreen(
                 val records = grouped[dateStr] ?: emptyList()
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFD1C4E9)), // яркий фон для даты
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFD1C4E9)),
                     shape = MaterialTheme.shapes.medium
                 ) {
                     Text(
@@ -286,12 +286,13 @@ fun RecordHistoryScreen(
                                 "medication" -> MedicationCard(
                                     record = record.data as MedicationEntry,
                                     medicationTypes = medicationTypes,
-                                    onEdit = { onEditRecord("medication", (record.data as MedicationEntry).id) }, // <--- ДОБАВИЛИ
+                                    onEdit = { onEditRecord("medication", (record.data as MedicationEntry).id) },
                                     onDelete = { medicationViewModel.deleteMedicationEntry(record.data) },
                                     valueColor = typeTextColors["medication"] ?: MaterialTheme.colorScheme.primaryContainer
                                 )
                                 "blood_pressure" -> BloodPressureCard(
                                     record = record.data as BloodPressureEntry,
+                                    onEdit = { onEditRecord("blood_pressure", (record.data as BloodPressureEntry).id) },
                                     onDelete = { bloodPressureViewModel.deleteBloodPressureEntry(record.data) },
                                     valueColor = typeTextColors["blood_pressure"] ?: MaterialTheme.colorScheme.primary
                                 )

@@ -4,6 +4,7 @@ package com.example.glucodialog.ui.components
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,6 +19,7 @@ import java.util.Locale
 @Composable
 fun BloodPressureCard(
     record: BloodPressureEntry,
+    onEdit: () -> Unit,
     onDelete: (BloodPressureEntry) -> Unit,
     valueColor: Color = Color.Black
 ) {
@@ -52,6 +54,11 @@ fun BloodPressureCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+
+            IconButton(onClick = onEdit) {
+                Icon(Icons.Default.Edit, contentDescription = "Редактировать", tint = MaterialTheme.colorScheme.primary)
+            }
+
             IconButton(onClick = { showDialog = true }) {
                 Icon(Icons.Default.Delete, contentDescription = "Удалить", tint = MaterialTheme.colorScheme.error)
             }

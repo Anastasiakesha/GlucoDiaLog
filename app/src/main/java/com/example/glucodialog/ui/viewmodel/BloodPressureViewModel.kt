@@ -13,7 +13,9 @@ import kotlinx.coroutines.launch
 class BloodPressureViewModel(
     private val insertBloodPressureEntryUseCase: InsertBloodPressureEntryUseCase,
     private val getAllUseCase: GetAllBloodPressureUseCase,
-    private val deleteBloodPressureEntryUseCase: DeleteBloodPressureEntryUseCase
+    private val deleteBloodPressureEntryUseCase: DeleteBloodPressureEntryUseCase,
+    private val updateBloodPressureEntryUseCase: UpdateBloodPressureUseCase,
+    private val getBloodPressureEntryByIdUseCase: GetBloodPressureEntryByIdUseCase
 ) : ViewModel() {
 
     private val _entries = MutableStateFlow<List<BloodPressureEntry>>(emptyList())
@@ -33,14 +35,31 @@ class BloodPressureViewModel(
     fun deleteBloodPressureEntry(entry: BloodPressureEntry) = viewModelScope.launch {
         deleteBloodPressureEntryUseCase(entry)
     }
+
+    fun updateBloodPressureEntry(entry: BloodPressureEntry, onComplete: () -> Unit = {}) = viewModelScope.launch {
+        updateBloodPressureEntryUseCase(entry)
+        onComplete()
+    }
+
+    suspend fun getEntryById(id: Int): BloodPressureEntry? {
+        return getBloodPressureEntryByIdUseCase(id)
+    }
 }
 
 class BloodPressureViewModelFactory(
     private val insertBloodPressureEntryUseCase: InsertBloodPressureEntryUseCase,
     private val getAllUseCase: GetAllBloodPressureUseCase,
-    private val deleteBloodPressureEntryUseCase: DeleteBloodPressureEntryUseCase
+    private val deleteBloodPressureEntryUseCase: DeleteBloodPressureEntryUseCase,
+    private val updateBloodPressureUseCase: UpdateBloodPressureUseCase,
+    private val getBloodPressureEntryByIdUseCase: GetBloodPressureEntryByIdUseCase
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        return BloodPressureViewModel(insertBloodPressureEntryUseCase, getAllUseCase, deleteBloodPressureEntryUseCase) as T
+        return BloodPressureViewModel(
+            insertBloodPressureEntryUseCase,
+            getAllUseCase,
+            deleteBloodPressureEntryUseCase,
+            updateBloodPressureUseCase,
+            getBloodPressureEntryByIdUseCase
+        ) as T
     }
 }
