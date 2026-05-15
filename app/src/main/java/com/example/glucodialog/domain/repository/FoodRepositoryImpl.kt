@@ -17,6 +17,9 @@ class FoodRepositoryImpl(
     override fun getAllFoodTypes(): Flow<List<FoodType>> =
         dao.getAllFoodItems().map { list -> list.map { it.toDomain() } }
 
+    override suspend fun getFoodEntryById(id: Int): FoodEntry? =
+        dao.getFoodEntryById(id)?.toDomain()
+
     override suspend fun insertFoodType(type: FoodType) {
         dao.insertFoodItem(type.toEntity())
     }

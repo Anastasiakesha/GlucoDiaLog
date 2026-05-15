@@ -9,6 +9,8 @@ interface FoodRepository {
 
     fun getAllFoodTypes(): Flow<List<FoodType>>
 
+    suspend fun getFoodEntryById(id: Int): FoodEntry?
+
     suspend fun insertFoodType(type: FoodType)
 
     suspend fun insertAllFoodTypes(types: List<FoodType>)

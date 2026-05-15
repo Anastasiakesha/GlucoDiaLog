@@ -18,6 +18,9 @@ interface FoodDao {
     @Query("SELECT * FROM food_items")
     fun getAllFoodItems(): Flow<List<FoodItem>>
 
+    @Query("SELECT * FROM food_entries WHERE id = :id LIMIT 1")
+    suspend fun getFoodEntryById(id: Int): FoodEntry?
+
     @Insert(onConflict = OnConflictStrategy.Companion.REPLACE)
     suspend fun insertAllFoodItems(items: List<FoodItem>)
 

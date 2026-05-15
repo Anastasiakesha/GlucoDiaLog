@@ -3,6 +3,7 @@ package com.example.glucodialog.ui.components
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,6 +20,7 @@ import java.util.Locale
 fun MealCard(
     record: FoodEntry,
     foodItems: List<FoodType>,
+    onEdit: () -> Unit,
     onDelete: (FoodEntry) -> Unit,
     valueColor: Color = Color.Black
 ) {
@@ -38,7 +40,6 @@ fun MealCard(
     val carbs = (food?.carbs ?: 0.0) * multiplier
 
     var showDialog by remember { mutableStateOf(false) }
-
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -78,6 +79,10 @@ fun MealCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+            }
+
+            IconButton(onClick = onEdit) {
+                Icon(Icons.Default.Edit, contentDescription = "Редактировать", tint = MaterialTheme.colorScheme.primary)
             }
 
             IconButton(

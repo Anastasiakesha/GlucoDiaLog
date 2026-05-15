@@ -25,7 +25,8 @@ class FoodViewModel(
     private val insertFoodTypeUseCase: InsertFoodTypeUseCase,
     private val insertAllFoodTypesUseCase: InsertAllFoodTypesUseCase,
     private val getFoodTypeByIdUseCase: GetFoodTypeByIdUseCase,
-    private val getFoodTypeByNameUseCase: GetFoodTypeByNameUseCase
+    private val getFoodTypeByNameUseCase: GetFoodTypeByNameUseCase,
+    private val getFoodEntryByIdUseCase: GetFoodEntryByIdUseCase
 ) : ViewModel() {
 
     private val _foodEntries = MutableStateFlow<List<FoodEntry>>(emptyList())
@@ -60,6 +61,9 @@ class FoodViewModel(
     fun addFoodEntry(entry: FoodEntry, onComplete: () -> Unit = {}) = viewModelScope.launch {
         insertFoodEntryUseCase(entry)
         onComplete()
+    }
+    suspend fun getEntryById(id: Int): FoodEntry? {
+        return getFoodEntryByIdUseCase(id)
     }
 
     fun updateEntry(entry: FoodEntry) = viewModelScope.launch {
@@ -104,7 +108,8 @@ class FoodViewModelFactory(
     private val insertFoodTypeUseCase: InsertFoodTypeUseCase,
     private val insertAllFoodTypesUseCase: InsertAllFoodTypesUseCase,
     private val getFoodTypeByIdUseCase: GetFoodTypeByIdUseCase,
-    private val getFoodTypeByNameUseCase: GetFoodTypeByNameUseCase
+    private val getFoodTypeByNameUseCase: GetFoodTypeByNameUseCase,
+    private val getFoodEntryByIdUseCase: GetFoodEntryByIdUseCase
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(FoodViewModel::class.java)) {
@@ -122,7 +127,8 @@ class FoodViewModelFactory(
                 insertFoodTypeUseCase,
                 insertAllFoodTypesUseCase,
                 getFoodTypeByIdUseCase,
-                getFoodTypeByNameUseCase
+                getFoodTypeByNameUseCase,
+                getFoodEntryByIdUseCase
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")

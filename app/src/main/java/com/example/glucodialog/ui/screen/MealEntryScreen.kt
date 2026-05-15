@@ -34,6 +34,7 @@ fun MealEntryScreen(
     viewModel: FoodViewModel,
     onBack: () -> Unit,
     userProfile: UserProfile?,
+    entryId: Int = -1
 ) {
     val scope = rememberCoroutineScope()
     val foodTypes by viewModel.foodTypes.collectAsState()
@@ -68,13 +69,23 @@ fun MealEntryScreen(
         selectedFood != null &&
                 !selectedUnit.isNullOrBlank() &&
                 quantityText.toDoubleOrNull()?.let { it > 0 } == true &&
-                currentGlucose.toDoubleOrNull() != null
+                (entryId != -1 || currentGlucose.toDoubleOrNull() != null)
     }
 
-    LaunchedEffect(foodTypes) {
-        if (selectedFood == null && foodTypes.isNotEmpty()) {
-            selectedFood = foodTypes.first()
-            selectedUnit = selectedFood?.allowedUnits?.split(",")?.map { it.trim() }?.firstOrNull()
+    LaunchedEffect(entryId, foodTypes) {
+        if (foodTypes.isNotEmpty()) {
+            if (entryId != -1) {
+                val entryToEdit = viewModel.getEntryById(entryId)
+                entryToEdit?.let { entry ->
+                    selectedFood = foodTypes.find { it.id == entry.foodTypeId }
+                    selectedUnit = entry.unit
+                    quantityText = entry.quantity.toString()
+                    calendar = Calendar.getInstance().apply { timeInMillis = entry.timestamp }
+                }
+            } else if (selectedFood == null) {
+                selectedFood = foodTypes.first()
+                selectedUnit = selectedFood?.allowedUnits?.split(",")?.map { it.trim() }?.firstOrNull()
+            }
         }
     }
 
@@ -288,18 +299,23 @@ fun MealEntryScreen(
             onClick = {
                 val quantityVal = quantityText.toDoubleOrNull()
                 val glucoseVal = currentGlucose.toDoubleOrNull()
-                if (selectedFood == null || selectedUnit.isNullOrBlank() || quantityVal == null || quantityVal <= 0 || glucoseVal == null) {
+                if (selectedFood == null || selectedUnit.isNullOrBlank() || quantityVal == null || quantityVal <= 0 || (entryId == -1 && glucoseVal == null)) {
                     errorMessage = "Заполните все поля корректно"
                     return@Button
                 }
                 val entry = FoodEntry(
+                    id = if (entryId != -1) entryId else 0,
                     foodTypeId = selectedFood!!.id,
                     quantity = quantityVal,
                     unit = selectedUnit!!,
                     timestamp = calendar.timeInMillis
                 )
                 scope.launch {
-                    viewModel.addFoodEntry(entry)
+                    if (entryId != -1) {
+                        viewModel.updateEntry(entry)
+                    } else {
+                        viewModel.addFoodEntry(entry)
+                    }
                     onBack()
                 }
             },
@@ -315,7 +331,8 @@ fun MealEntryScreen(
             modifier = Modifier.size(20.dp)
         )
             Spacer(Modifier.width(8.dp))
-            Text("Добавить запись", color = Color.White) }
+            Text(if (entryId != -1) "Сохранить изменения" else "Добавить запись", color = Color.White)
+        }
 
         errorMessage?.let { Text(it, color = MaterialTheme.colorScheme.error) }
     }
