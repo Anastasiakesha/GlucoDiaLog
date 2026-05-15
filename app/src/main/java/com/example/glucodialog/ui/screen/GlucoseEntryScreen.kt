@@ -35,6 +35,7 @@ import kotlin.text.iterator
 fun GlucoseEntryScreen(
     viewModel: GlucoseViewModel,
     userProfile: UserProfile?,
+    entryId: Int = -1,
     onBack: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
@@ -64,6 +65,20 @@ fun GlucoseEntryScreen(
             "Корректирующая доза: %.1f ед.".format(dose)
         } else {
             "Корректирующая доза: 0 ед."
+        }
+    }
+
+    LaunchedEffect(entryId) {
+        if (entryId != -1) {
+            val entryToEdit = viewModel.getEntryById(entryId)
+            entryToEdit?.let { entry ->
+                value = TextFieldValue(entry.glucoseLevel.toString())
+                notes = TextFieldValue(entry.note ?: "")
+                selectedUnit = entry.unit
+                calendar = Calendar.getInstance().apply { timeInMillis = entry.timestamp }
+
+                updateCorrectionDose()
+            }
         }
     }
 
@@ -242,12 +257,20 @@ fun GlucoseEntryScreen(
             onClick = {
                 val numeric = value.text.toDoubleOrNull() ?: return@Button
                 val entry = GlucoseEntry(
+                    id = if (entryId != -1) entryId else 0, // <--- ВАЖНО!
                     glucoseLevel = numeric,
                     unit = selectedUnit,
                     timestamp = calendar.timeInMillis,
                     note = notes.text.ifBlank { null }
                 )
-                scope.launch { viewModel.addEntry(entry) { onBack() } }
+                scope.launch {
+                    if (entryId != -1) {
+                        viewModel.updateEntry(entry)
+                    } else {
+                        viewModel.addEntry(entry)
+                    }
+                    onBack()
+                }
                 value = TextFieldValue("")
                 notes = TextFieldValue("")
                 wasTouched = false
@@ -265,7 +288,7 @@ fun GlucoseEntryScreen(
                 modifier = Modifier.size(20.dp)
             )
             Spacer(Modifier.width(8.dp))
-            Text("Добавить запись", color = Color.White)
+            Text(if (entryId != -1) "Сохранить изменения" else "Добавить запись", color = Color.White)
         }
     }
 }

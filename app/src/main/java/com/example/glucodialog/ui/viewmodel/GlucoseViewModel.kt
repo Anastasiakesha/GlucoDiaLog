@@ -17,7 +17,8 @@ class GlucoseViewModel(
     private val insertGlucoseUseCase: InsertGlucoseUseCase,
     private val updateGlucoseEntryUseCase: UpdateGlucoseEntryUseCase,
     private val deleteGlucoseEntryUseCase: DeleteGlucoseEntryUseCase,
-    private val updateNoteForEntryUseCase: UpdateNoteForEntryUseCase
+    private val updateNoteForEntryUseCase: UpdateNoteForEntryUseCase,
+    private val getGlucoseEntryByIdUseCase: GetGlucoseEntryByIdUseCase
 ) : ViewModel() {
 
     private val _glucoseEntries = MutableStateFlow<List<GlucoseEntry>>(emptyList())
@@ -48,6 +49,10 @@ class GlucoseViewModel(
         updateNoteForEntryUseCase(entryId, note)
     }
 
+    suspend fun getEntryById(id: Int): GlucoseEntry? {
+        return getGlucoseEntryByIdUseCase(id)
+    }
+
     suspend fun getAllEntriesOnce(): List<GlucoseEntry> = getAllGlucoseEntriesOnceUseCase()
 
     suspend fun getEntriesBetween(start: Long, end: Long): List<GlucoseEntry> =
@@ -61,7 +66,8 @@ class GlucoseViewModelFactory(
     private val insertGlucoseUseCase: InsertGlucoseUseCase,
     private val updateGlucoseEntryUseCase: UpdateGlucoseEntryUseCase,
     private val deleteGlucoseEntryUseCase: DeleteGlucoseEntryUseCase,
-    private val updateNoteForEntryUseCase: UpdateNoteForEntryUseCase
+    private val updateNoteForEntryUseCase: UpdateNoteForEntryUseCase,
+    private val getGlucoseEntryByIdUseCase: GetGlucoseEntryByIdUseCase
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(GlucoseViewModel::class.java)) {
@@ -73,7 +79,8 @@ class GlucoseViewModelFactory(
                 insertGlucoseUseCase,
                 updateGlucoseEntryUseCase,
                 deleteGlucoseEntryUseCase,
-                updateNoteForEntryUseCase
+                updateNoteForEntryUseCase,
+                getGlucoseEntryByIdUseCase
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")

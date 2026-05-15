@@ -4,6 +4,7 @@ import com.example.glucodialog.data.repository.GlucoseDao
 import com.example.glucodialog.domain.mappers.toDomain
 import com.example.glucodialog.domain.mappers.toLocal
 import com.example.glucodialog.domain.model.GlucoseEntry
+import com.example.glucodialog.domain.model.MedicationEntry
 import com.example.glucodialog.domain.repository.GlucoseRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -16,6 +17,9 @@ class GlucoseRepositoryImpl(
     override suspend fun insertGlucoseEntry(entry: GlucoseEntry) {
         dao.insertGlucoseEntry(entry.toLocal())
     }
+
+    override suspend fun getGlucoseEntryById(id: Int): GlucoseEntry? =
+        dao.getGlucoseEntryById(id)?.toDomain()
 
     override fun getAllGlucoseEntries(): Flow<List<GlucoseEntry>> {
         return dao.getAllGlucoseEntries().map { list -> list.map { it.toDomain() } }

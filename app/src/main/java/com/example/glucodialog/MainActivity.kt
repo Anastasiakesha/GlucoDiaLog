@@ -165,6 +165,9 @@ class MainActivity : ComponentActivity() {
                         ),
                         updateNoteForEntryUseCase = UpdateNoteForEntryUseCase(
                             glucoseRepository
+                        ),
+                        getGlucoseEntryByIdUseCase = GetGlucoseEntryByIdUseCase(
+                            glucoseRepository
                         )
                     )
                 )
@@ -518,11 +521,16 @@ class MainActivity : ComponentActivity() {
                                         )
                                     }
 
-                                    composable(Routes.GLUCOSE) {
+                                    composable(
+                                        route = "${Routes.GLUCOSE}?id={id}",
+                                        arguments = listOf(navArgument("id") { type = NavType.IntType; defaultValue = -1 })
+                                    ) { backStackEntry ->
+                                        val id = backStackEntry.arguments?.getInt("id") ?: -1
 
                                         GlucoseEntryScreen(
                                             viewModel = glucoseViewModel,
                                             userProfile = userProfile,
+                                            entryId = id,
                                             onBack = { navController.popBackStack() }
                                         )
                                     }

@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
+import com.example.glucodialog.data.local.FoodEntry
 import com.example.glucodialog.data.local.GlucoseEntry
 import kotlinx.coroutines.flow.Flow
 
@@ -16,6 +17,9 @@ interface GlucoseDao {
 
     @Query("SELECT * FROM glucose_entries ORDER BY timestamp DESC")
     fun getAllGlucoseEntries(): Flow<List<GlucoseEntry>>
+
+    @Query("SELECT * FROM glucose_entries WHERE id = :id LIMIT 1")
+    suspend fun getGlucoseEntryById(id: Int): GlucoseEntry?
 
     @Query("SELECT * FROM glucose_entries ORDER BY timestamp DESC")
     suspend fun getAllGlucoseEntriesOnce(): List<GlucoseEntry>

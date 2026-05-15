@@ -249,10 +249,12 @@ fun RecordHistoryScreen(
                             when (record.type) {
                                 "glucose" -> GlucoseCard(
                                     record = record.data as GlucoseEntry,
+                                    onEdit = { onEditRecord("glucose", (record.data as GlucoseEntry).id) },
                                     onDelete = { glucoseViewModel.deleteEntry(record.data) },
                                     userProfile = userProfile,
                                     valueColor = typeTextColors["glucose"] ?: MaterialTheme.colorScheme.error
                                 )
+
                                 "meal" -> MealCard(
                                     record = record.data as FoodEntry,
                                     foodItems = foodItems,
