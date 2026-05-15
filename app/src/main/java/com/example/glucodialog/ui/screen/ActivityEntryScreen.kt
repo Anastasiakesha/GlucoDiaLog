@@ -30,12 +30,13 @@ import kotlinx.coroutines.launch
 @Composable
 fun ActivityEntryScreen(
     viewModel: ActivityEntryViewModel,
+    entryId: Int = -1,
     onBack: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
     val activityTypes by viewModel.activityTypes.collectAsState()
     var typeTouched by remember { mutableStateOf(false) }
-    var selectedType by remember { mutableStateOf<ActivityType?>(activityTypes.firstOrNull()) }
+    var selectedType by remember { mutableStateOf<ActivityType?>(null) }
     var durationMinutes by remember { mutableStateOf("") }
     var calendar by remember { mutableStateOf(Calendar.getInstance()) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -46,6 +47,21 @@ fun ActivityEntryScreen(
 
     val canSave = selectedType != null && durationMinutes.toIntOrNull()?.let { it > 0 } == true
     val showTypeError = (typeTouched || attemptedSave) && selectedType == null && !addingNewType
+
+    LaunchedEffect(entryId, activityTypes) {
+        if (activityTypes.isNotEmpty()) {
+            if (entryId != -1) {
+                val entryToEdit = viewModel.getEntryById(entryId)
+                entryToEdit?.let { entry ->
+                    selectedType = activityTypes.find { it.id == entry.activityTypeId }
+                    durationMinutes = entry.durationMinutes.toString()
+                    calendar = Calendar.getInstance().apply { timeInMillis = entry.timestamp }
+                }
+            } else if (selectedType == null) {
+                selectedType = activityTypes.first()
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -205,11 +221,17 @@ fun ActivityEntryScreen(
                     return@Button
                 }
                 val entry = ActivityEntry(
+                    id = if (entryId != -1) entryId else 0,
                     activityTypeId = selectedType!!.id,
                     durationMinutes = minutes,
                     timestamp = calendar.timeInMillis
                 )
-                viewModel.addActivityEntry(entry)
+                if (entryId != -1) {
+                    viewModel.updateActivityEntry(entry)
+                } else {
+                    viewModel.addActivityEntry(entry)
+                }
+
                 onBack()
             },
             enabled = canSave,
@@ -224,7 +246,7 @@ fun ActivityEntryScreen(
                 modifier = Modifier.size(20.dp)
             )
             Spacer(Modifier.width(8.dp))
-            Text("Добавить запись", color = Color.White)
+            Text(if (entryId != -1) "Сохранить изменения" else "Добавить запись", color = Color.White)
         }
     }
 }

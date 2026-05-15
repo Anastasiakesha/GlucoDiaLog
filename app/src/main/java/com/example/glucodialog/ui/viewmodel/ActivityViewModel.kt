@@ -25,7 +25,8 @@ class ActivityEntryViewModel(
     private val getActivityEntriesBetweenUseCase: GetActivitiesBetweenUseCase,
     private val insertActivityEntryUseCase: InsertActivityEntryUseCase,
     private val updateActivityEntryUseCase: UpdateActivityEntryUseCase,
-    private val deleteActivityEntryUseCase: DeleteActivityEntryUseCase
+    private val deleteActivityEntryUseCase: DeleteActivityEntryUseCase,
+    private val getActivityEntryByIdUseCase: GetActivityEntryByIdUseCase
 ) : ViewModel() {
 
     private val _activityTypes = MutableStateFlow<List<ActivityType>>(emptyList())
@@ -69,6 +70,10 @@ class ActivityEntryViewModel(
         deleteActivityEntryUseCase(entry)
     }
 
+    suspend fun getEntryById(id: Int): ActivityEntry? {
+        return getActivityEntryByIdUseCase(id)
+    }
+
     suspend fun getActivityById(id: Int): ActivityType? = getActivityByIdUseCase(id)
 
     suspend fun getAllActivityEntriesOnce(): List<ActivityEntry> = getAllActivityEntriesOnceUseCase()
@@ -97,7 +102,8 @@ class ActivityEntryViewModelFactory(
     private val getActivityEntriesBetweenUseCase: GetActivitiesBetweenUseCase,
     private val insertActivityEntryUseCase: InsertActivityEntryUseCase,
     private val updateActivityEntryUseCase: UpdateActivityEntryUseCase,
-    private val deleteActivityEntryUseCase: DeleteActivityEntryUseCase
+    private val deleteActivityEntryUseCase: DeleteActivityEntryUseCase,
+    private val getActivityEntryByIdUseCase: GetActivityEntryByIdUseCase
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(ActivityEntryViewModel::class.java)) {
@@ -115,7 +121,8 @@ class ActivityEntryViewModelFactory(
                 getActivityEntriesBetweenUseCase,
                 insertActivityEntryUseCase,
                 updateActivityEntryUseCase,
-                deleteActivityEntryUseCase
+                deleteActivityEntryUseCase,
+                getActivityEntryByIdUseCase
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")

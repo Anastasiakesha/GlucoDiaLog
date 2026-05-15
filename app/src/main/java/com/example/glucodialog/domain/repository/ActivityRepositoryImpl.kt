@@ -15,6 +15,8 @@ class ActivityRepositoryImpl(
     override fun getAllActivityTypes(): Flow<List<ActivityType>> {
         return dao.getAllActivityTypes().map { list -> list.map { it.toDomain() } }
     }
+    override suspend fun getActivityEntryById(id: Int): ActivityEntry? =
+        dao.getActivityEntryById(id)?.toDomain()
 
     override suspend fun insertActivityType(type: ActivityType): Long {
         return dao.insertActivityType(type.toLocal())

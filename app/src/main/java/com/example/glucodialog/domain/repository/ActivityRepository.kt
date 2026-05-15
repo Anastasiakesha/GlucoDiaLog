@@ -8,6 +8,8 @@ import kotlinx.coroutines.flow.Flow
 
 interface ActivityRepository {
     fun getAllActivityTypes(): Flow<List<ActivityType>>
+
+    suspend fun getActivityEntryById(id: Int): ActivityEntry?
     suspend fun insertAllActivityTypes(types: List<ActivityType>)
     suspend fun insertActivityEntry(entry: ActivityEntry)
     fun getAllActivityEntries(): Flow<List<ActivityEntry>>

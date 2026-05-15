@@ -18,6 +18,9 @@ interface ActivityDao {
     @Query("SELECT * FROM activity_types")
     fun getAllActivityTypes(): Flow<List<ActivityType>>
 
+    @Query("SELECT * FROM activity_entries WHERE id = :id LIMIT 1")
+    suspend fun getActivityEntryById(id: Int): ActivityEntry?
+
     @Insert(onConflict = OnConflictStrategy.Companion.REPLACE)
     suspend fun insertAllActivityTypes(types: List<ActivityType>)
 
