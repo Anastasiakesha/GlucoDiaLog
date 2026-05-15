@@ -19,6 +19,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.*
+import androidx.navigation.navArgument
+import androidx.navigation.NavType
 import com.example.glucodialog.data.AppDatabase
 import com.example.glucodialog.domain.model.ActivityEntryWithTypeDomain
 import com.example.glucodialog.domain.model.FoodEntryWithTypeDomain
@@ -130,6 +132,9 @@ class MainActivity : ComponentActivity() {
                         ),
                         getFoodTypeByNameUseCase = GetFoodTypeByNameUseCase(
                             foodRepository
+                        ),
+                        getFoodEntryByIdUseCase = GetFoodEntryByIdUseCase(
+                            foodRepository
                         )
                     )
                 )
@@ -207,6 +212,9 @@ class MainActivity : ComponentActivity() {
                         ),
                         getAllInsulinEntriesWithTypesOnceUseCase = GetAllInsulinEntriesWithTypesOnceUseCase(
                             insulinRepository
+                        ),
+                        getInsulinEntryByIdUseCase = GetInsulinEntryByIdUseCase(
+                            insulinRepository
                         )
                     )
                 )
@@ -256,6 +264,9 @@ class MainActivity : ComponentActivity() {
                         ),
                         deleteActivityEntryUseCase = DeleteActivityEntryUseCase(
                             activityRepository
+                        ),
+                        getActivityEntryByIdUseCase = GetActivityEntryByIdUseCase(
+                            activityRepository
                         )
                     )
                 )
@@ -303,6 +314,9 @@ class MainActivity : ComponentActivity() {
                             medicationRepository
                         ),
                         deleteMedicationEntryUseCase = DeleteMedicationEntryUseCase(
+                            medicationRepository
+                        ),
+                        getMedicationEntryByIdUseCase = GetMedicationEntryByIdUseCase(
                             medicationRepository
                         )
                     )
@@ -513,35 +527,56 @@ class MainActivity : ComponentActivity() {
                                         )
                                     }
 
-                                    composable(Routes.INSULIN) {
+                                    composable(
+                                        route = "${Routes.INSULIN}?id={id}",
+                                        arguments = listOf(navArgument("id") { type = NavType.IntType; defaultValue = -1 })
+                                    ) { backStackEntry ->
+                                        val id = backStackEntry.arguments?.getInt("id") ?: -1
 
                                         InsulinEntryScreen(
                                             viewModel = insulinViewModel,
                                             userProfile = userProfile,
+                                            entryId = id,
                                             onBack = { navController.popBackStack() }
                                         )
                                     }
 
-                                    composable(Routes.MEDICATION) {
+                                    composable(
+                                        route = "${Routes.MEDICATION}?id={id}",
+                                        arguments = listOf(navArgument("id") { type = NavType.IntType; defaultValue = -1 })
+                                    ) { backStackEntry ->
+                                        val id = backStackEntry.arguments?.getInt("id") ?: -1
 
                                         MedicationEntryScreen(
                                             viewModel = medicationViewModel,
+                                            entryId = id,
                                             onBack = { navController.popBackStack() }
                                         )
                                     }
 
-                                    composable(Routes.MEAL) {
+                                    composable(
+                                        route = "${Routes.MEAL}?id={id}",
+                                        arguments = listOf(navArgument("id") { type = NavType.IntType; defaultValue = -1 })
+                                    ) { backStackEntry ->
+                                        val id = backStackEntry.arguments?.getInt("id") ?: -1
 
                                         MealEntryScreen(
                                             viewModel = foodViewModel,
                                             userProfile = userProfile,
+                                            entryId = id,
                                             onBack = { navController.popBackStack() }
                                         )
                                     }
 
-                                    composable(Routes.ACTIVITY) {
+                                    composable(
+                                        route = "${Routes.ACTIVITY}?id={id}",
+                                        arguments = listOf(navArgument("id") { type = NavType.IntType; defaultValue = -1 })
+                                    ) { backStackEntry ->
+                                        val id = backStackEntry.arguments?.getInt("id") ?: -1
+
                                         ActivityEntryScreen(
                                             viewModel = activityViewModel,
+                                            entryId = id,
                                             onBack = { navController.popBackStack() }
                                         )
                                     }
@@ -559,6 +594,7 @@ class MainActivity : ComponentActivity() {
 
                                         RecordHistoryScreen(
                                             onSelectScreen = { route -> navController.navigate(route) },
+                                            onEditRecord = { route, id -> navController.navigate("$route?id=$id") },
                                             userProfile = userProfile,
                                             glucoseReadings = glucoseReadings,
                                             meals = meals,

@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.FavoriteBorder
 @Composable
 fun RecordHistoryScreen(
     onSelectScreen: (String) -> Unit,
+    onEditRecord: (String, Int) -> Unit,
     userProfile: UserProfile?,
     glucoseReadings: List<GlucoseEntry>,
     meals: List<FoodEntry>,
@@ -255,6 +256,7 @@ fun RecordHistoryScreen(
                                 "meal" -> MealCard(
                                     record = record.data as FoodEntry,
                                     foodItems = foodItems,
+                                    onEdit = { onEditRecord("meal", (record.data as FoodEntry).id) },
                                     onDelete = { foodViewModel.deleteEntry(record.data) },
                                     valueColor = typeTextColors["meal"] ?: MaterialTheme.colorScheme.secondary
                                 )
@@ -262,11 +264,11 @@ fun RecordHistoryScreen(
                                 "insulin" -> if (record.data is InsulinEntryWithTypeDomain) {
                                     InsulinCard(
                                         record = record.data,
+                                        onEdit = { onEditRecord("insulin", record.data.entry.id) },
                                         onDelete = { insulinViewModel.deleteInsulinEntry(record.data.entry) },
                                         valueColor = typeTextColors["insulin"] ?: MaterialTheme.colorScheme.tertiary
                                     )
                                 } else {
-                                    // если тип неверный — показываем заглушку
                                     Text(
                                         text = "Ошибка: неверная запись инсулина",
                                         color = MaterialTheme.colorScheme.error
@@ -275,12 +277,14 @@ fun RecordHistoryScreen(
                                 "activity" -> ActivityCard(
                                     record = record.data as ActivityEntry,
                                     activityTypes = activityTypes,
+                                    onEdit = { onEditRecord("activity", (record.data as ActivityEntry).id) },
                                     onDelete = { activityViewModel.deleteActivityEntry(record.data) },
                                     valueColor = typeTextColors["activity"] ?: MaterialTheme.colorScheme.primary
                                 )
                                 "medication" -> MedicationCard(
                                     record = record.data as MedicationEntry,
                                     medicationTypes = medicationTypes,
+                                    onEdit = { onEditRecord("medication", (record.data as MedicationEntry).id) }, // <--- ДОБАВИЛИ
                                     onDelete = { medicationViewModel.deleteMedicationEntry(record.data) },
                                     valueColor = typeTextColors["medication"] ?: MaterialTheme.colorScheme.primaryContainer
                                 )

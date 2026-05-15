@@ -30,12 +30,13 @@ import java.util.*
 @Composable
 fun MedicationEntryScreen(
     viewModel: MedicationViewModel,
+    entryId: Int = -1,
     onBack: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
 
     val medicationTypes by viewModel.medicationTypes.collectAsState()
-    var selectedType by remember { mutableStateOf<MedicationType?>(medicationTypes.firstOrNull()) }
+    var selectedType by remember { mutableStateOf<MedicationType?>(null) }
     var addingNewType by remember { mutableStateOf(false) }
     var newTypeName by remember { mutableStateOf("") }
 
@@ -51,8 +52,20 @@ fun MedicationEntryScreen(
     var expandedType by remember { mutableStateOf(false) }
     var expandedUnit by remember { mutableStateOf(false) }
 
-    LaunchedEffect(medicationTypes) {
-        if (medicationTypes.isNotEmpty() && selectedType == null) selectedType = medicationTypes[0]
+    LaunchedEffect(entryId, medicationTypes) {
+        if (medicationTypes.isNotEmpty()) {
+            if (entryId != -1) {
+                val entryToEdit = viewModel.getEntryById(entryId)
+                entryToEdit?.let { entry ->
+                    selectedType = medicationTypes.find { it.id == entry.medicationTypeId }
+                    dosage = TextFieldValue(entry.dose)
+                    unit = entry.unit
+                    calendar = Calendar.getInstance().apply { timeInMillis = entry.timestamp }
+                }
+            } else if (selectedType == null) {
+                selectedType = medicationTypes.first()
+            }
+        }
     }
 
     val doseValue = dosage.text.toDoubleOrNull()
@@ -231,12 +244,20 @@ fun MedicationEntryScreen(
                     return@Button
                 }
                 val entry = MedicationEntry(
+                    id = if (entryId != -1) entryId else 0,
                     medicationTypeId = selectedType!!.id,
                     dose = dosage.text,
                     unit = unit,
                     timestamp = calendar.timeInMillis
                 )
-                scope.launch { viewModel.addMedicationEntry(entry); onBack() }
+                scope.launch {
+                    if (entryId != -1) {
+                        viewModel.updateMedicationEntry(entry)
+                    } else {
+                        viewModel.addMedicationEntry(entry)
+                    }
+                    onBack()
+                }
             },
             enabled = canSave,
             modifier = Modifier.fillMaxWidth().height(56.dp),
@@ -250,7 +271,7 @@ fun MedicationEntryScreen(
                 modifier = Modifier.size(20.dp)
             )
             Spacer(Modifier.width(8.dp))
-            Text("Добавить запись", color = Color.White)
+            Text(if (entryId != -1) "Сохранить изменения" else "Добавить запись", color = Color.White)
         }
     }
 }

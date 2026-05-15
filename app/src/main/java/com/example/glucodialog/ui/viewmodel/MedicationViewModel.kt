@@ -25,7 +25,8 @@ class MedicationViewModel(
     private val getMedicationEntriesBetweenUseCase: GetMedicationEntriesBetweenUseCase,
     private val insertMedicationEntryUseCase: InsertMedicationEntryUseCase,
     private val updateMedicationEntryUseCase: UpdateMedicationEntryUseCase,
-    private val deleteMedicationEntryUseCase: DeleteMedicationEntryUseCase
+    private val deleteMedicationEntryUseCase: DeleteMedicationEntryUseCase,
+    private val getMedicationEntryByIdUseCase: GetMedicationEntryByIdUseCase
 ) : ViewModel() {
 
     private val _medicationTypes = MutableStateFlow<List<MedicationType>>(emptyList())
@@ -68,6 +69,9 @@ class MedicationViewModel(
     fun deleteMedicationEntry(entry: MedicationEntry) = viewModelScope.launch {
         deleteMedicationEntryUseCase(entry)
     }
+    suspend fun getEntryById(id: Int): MedicationEntry? {
+        return getMedicationEntryByIdUseCase(id)
+    }
 
     suspend fun getMedicationById(id: Int): MedicationType? =
         getMedicationByIdUseCase(id)
@@ -100,7 +104,8 @@ class MedicationViewModelFactory(
     private val getMedicationEntriesBetweenUseCase: GetMedicationEntriesBetweenUseCase,
     private val insertMedicationEntryUseCase: InsertMedicationEntryUseCase,
     private val updateMedicationEntryUseCase: UpdateMedicationEntryUseCase,
-    private val deleteMedicationEntryUseCase: DeleteMedicationEntryUseCase
+    private val deleteMedicationEntryUseCase: DeleteMedicationEntryUseCase,
+    private val getMedicationEntryByIdUseCase: GetMedicationEntryByIdUseCase
 ) : ViewModelProvider.Factory {
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -119,7 +124,8 @@ class MedicationViewModelFactory(
                 getMedicationEntriesBetweenUseCase,
                 insertMedicationEntryUseCase,
                 updateMedicationEntryUseCase,
-                deleteMedicationEntryUseCase
+                deleteMedicationEntryUseCase,
+                getMedicationEntryByIdUseCase
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")

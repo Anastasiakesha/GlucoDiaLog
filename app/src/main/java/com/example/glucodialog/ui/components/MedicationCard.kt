@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -34,6 +35,7 @@ import java.util.Locale
 fun MedicationCard(
     record: MedicationEntry,
     medicationTypes: List<MedicationType>,
+    onEdit: () -> Unit,
     onDelete: (MedicationEntry) -> Unit,
     valueColor: Color = Color.Black
 ) {
@@ -73,6 +75,9 @@ fun MedicationCard(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+            }
+            IconButton(onClick = onEdit) {
+                Icon(Icons.Default.Edit, contentDescription = "Редактировать", tint = MaterialTheme.colorScheme.primary)
             }
 
             IconButton(
