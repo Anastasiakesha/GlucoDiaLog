@@ -37,11 +37,6 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".AddMealActivity"/>
-        <activity android:name=".AddInsulinActivity"/>
-        <activity android:name=".AddGlucoseActivity"/>
-        <activity android:name=".AddMedicationActivity"/>
-        <activity android:name=".AddPhysicalActivity"/>
         <activity android:name=".ExportReportActivity" />
         <activity android:name=".ImportActivity" />
         <activity android:name=".ExportPDFActivity" />
