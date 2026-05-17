@@ -74,7 +74,7 @@ fun MealEntryScreen(
         if (tdd > 0) 100 / tdd else null
     }
 
-    val quantity = quantityText.toDoubleOrNull() ?: 0.0
+    val quantityMeal = quantityText.toDoubleOrNull() ?: 0.0
 
     val bolusDose: Double? = run {
         val icr = carbRatio
@@ -83,7 +83,7 @@ fun MealEntryScreen(
 
         if (icr == null || icr <= 0.0 || current == null) null
         else {
-            val mealInsulin = if (quantity > 0.0) ((selectedFood?.carbs ?: 0.0) * (quantity / 100.0)) / icr else 0.0
+            val mealInsulin = if (quantityMeal > 0.0) ((selectedFood?.carbs ?: 0.0) * (quantityMeal / 100.0)) / icr else 0.0
 
             val sensitivity = isf ?: 2.0
             val correction = if (target != null && current > target) (current - target) / sensitivity else 0.0
