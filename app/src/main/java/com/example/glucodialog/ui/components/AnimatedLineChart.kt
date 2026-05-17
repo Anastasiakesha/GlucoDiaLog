@@ -1,9 +1,7 @@
 package com.example.glucodialog.ui.components
 
-import android.text.TextPaint
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -24,19 +22,22 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import com.example.glucodialog.domain.model.ChartData
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.asAndroidPath
 import androidx.compose.ui.graphics.asComposePath
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.glucodialog.domain.model.ChartData
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-
 
 @Composable
 fun AnimatedLineChart(
@@ -55,8 +56,10 @@ fun AnimatedLineChart(
     val timeFormatter = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
     val dateFormatter = remember { SimpleDateFormat("dd MMM", Locale.getDefault()) }
 
+    val textMeasurer = rememberTextMeasurer()
+
     LaunchedEffect(data) {
-        animationProgress.snapTo(0f) // Сброс в 0 при изменении данных
+        animationProgress.snapTo(0f)
         animationProgress.animateTo(
             targetValue = 1f,
             animationSpec = tween(
@@ -86,11 +89,24 @@ fun AnimatedLineChart(
 
             data.lines.forEach { line ->
                 val sortedPoints = line.points.sortedBy { it.timestamp }
+
                 if (sortedPoints.size < 2) {
                     sortedPoints.firstOrNull()?.let { point ->
                         val x = if (timeRange == 1f) size.width / 2 else ((point.timestamp - minTime) / timeRange) * size.width
                         val y = size.height - ((point.value - minValue) / valueRange) * size.height
-                        drawCircle(line.color, radius = 6f, center = Offset(x, y))
+
+                        drawCircle(line.color, radius = 6f, center = Offset(x, y), alpha = animationProgress.value)
+
+                        val text = String.format(Locale.getDefault(), "%.1f", point.value)
+                        val textLayoutResult = textMeasurer.measure(
+                            text = text,
+                            style = TextStyle(color = Color.DarkGray, fontSize = 10.sp)
+                        )
+                        drawText(
+                            textLayoutResult = textLayoutResult,
+                            topLeft = Offset(x - textLayoutResult.size.width / 2, y - textLayoutResult.size.height - 10f),
+                            alpha = animationProgress.value
+                        )
                     }
                     return@forEach
                 }
@@ -103,7 +119,6 @@ fun AnimatedLineChart(
                 }
 
                 val pathMeasure = android.graphics.PathMeasure(path.asAndroidPath(), false)
-                val animatedPath = Path()
                 val androidPath = android.graphics.Path()
                 pathMeasure.getSegment(0f, pathMeasure.length * animationProgress.value, androidPath, true)
 
@@ -112,6 +127,25 @@ fun AnimatedLineChart(
                     color = line.color,
                     style = Stroke(width = 5f, cap = StrokeCap.Round, join = StrokeJoin.Round)
                 )
+
+                sortedPoints.forEach { point ->
+                    val x = ((point.timestamp - minTime) / timeRange) * size.width
+                    val y = size.height - ((point.value - minValue) / valueRange) * size.height
+
+                    drawCircle(color = line.color, radius = 6f, center = Offset(x, y), alpha = animationProgress.value)
+
+                    val text = String.format(Locale.getDefault(), "%.1f", point.value)
+                    val textLayoutResult = textMeasurer.measure(
+                        text = text,
+                        style = TextStyle(color = Color.DarkGray, fontSize = 10.sp)
+                    )
+
+                    drawText(
+                        textLayoutResult = textLayoutResult,
+                        topLeft = Offset(x - textLayoutResult.size.width / 2, y - textLayoutResult.size.height - 10f),
+                        alpha = animationProgress.value
+                    )
+                }
             }
         }
 
@@ -126,14 +160,12 @@ fun AnimatedLineChart(
                     .padding(horizontal = 4.dp, vertical = 4.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                // Время первой точки
                 Text(
                     text = timeFormatter.format(Date(minTime)),
                     style = MaterialTheme.typography.labelSmall,
                     color = Color.Gray
                 )
 
-                // Если разница больше 24 часов, покажем дату посередине
                 if (maxTime - minTime > 24 * 60 * 60 * 1000) {
                     Text(
                         text = dateFormatter.format(Date((minTime + maxTime) / 2)),
@@ -142,7 +174,6 @@ fun AnimatedLineChart(
                     )
                 }
 
-                // Время последней точки
                 Text(
                     text = timeFormatter.format(Date(maxTime)),
                     style = MaterialTheme.typography.labelSmall,
