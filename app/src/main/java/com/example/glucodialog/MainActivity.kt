@@ -61,6 +61,8 @@ import com.example.glucodialog.ui.viewmodel.MainViewModel
 import com.example.glucodialog.ui.viewmodel.MainViewModel.MainViewModelFactory
 import com.example.glucodialog.ui.viewmodel.MedicationViewModel
 import com.example.glucodialog.ui.viewmodel.MedicationViewModelFactory
+import com.example.glucodialog.ui.viewmodel.TherapyPlanViewModel
+import com.example.glucodialog.ui.viewmodel.TherapyPlanViewModelFactory
 
 
 class MainActivity : ComponentActivity() {
@@ -77,6 +79,7 @@ class MainActivity : ComponentActivity() {
         const val MEAL = "meal"
         const val MEDICATION = "medication"
         const val BLOOD_PRESSURE = "blood_pressure"
+        const val THERAPY_PLAN = "therapy_plan"
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
@@ -341,6 +344,20 @@ class MainActivity : ComponentActivity() {
                 )
                 val bpRecords by bpViewModel.entries.collectAsState()
 
+                val therapyPlanViewModel: TherapyPlanViewModel = viewModel(
+                    factory = TherapyPlanViewModelFactory(
+                        therapyPlanDao = db.therapyPlanDao(),
+                        insulinDao = db.insulinDao(),
+                        medicationDao = db.medicationDao()
+                    )
+                )
+
+                val activePlan by therapyPlanViewModel.activePlan.collectAsState()
+
+                LaunchedEffect(userProfile?.id) {
+                    userProfile?.id?.let { therapyPlanViewModel.setUserId(it) }
+                }
+
                 val glucoseEntries by db.glucoseDao().getAllGlucoseEntries()
                     .collectAsState(initial = emptyList())
                 val foodEntriesWithItems by db.foodDao().getAllFoodEntriesWithItemsFlow()
@@ -433,6 +450,7 @@ class MainActivity : ComponentActivity() {
                                 var currentProfile by remember {
                                     mutableStateOf(
                                         UserProfile(
+                                            id = 0,
                                             email = "",
                                             name = "",
                                             gender = "",
@@ -441,15 +459,7 @@ class MainActivity : ComponentActivity() {
                                             diabetesType = "",
                                             targetGlucoseLow = 0.0,
                                             targetGlucoseHigh = 0.0,
-                                            glucoseUnit = "",
-                                            bolusInsulin = "",
-                                            bolusDose = 0.0,
-                                            basalInsulin = "",
-                                            basalDose = 0.0,
-                                            medication = "",
-                                            medicationDose = 0.0,
-                                            medicationUnit = "",
-                                            medicationTimeMinutesFromMidnight = 0
+                                            glucoseUnit = ""
                                         )
                                     )
                                 }
@@ -504,7 +514,16 @@ class MainActivity : ComponentActivity() {
                                     composable(Routes.PROFILE) {
                                         ProfileViewScreen(
                                             profile = userProfile!!,
-                                            onEdit = { navController.navigate(Routes.PROFILE_FORM) }
+                                            onEdit = { navController.navigate(Routes.PROFILE_FORM) },
+                                            onTherapyPlanClick = { navController.navigate(Routes.THERAPY_PLAN) }
+                                        )
+                                    }
+
+                                    composable(Routes.THERAPY_PLAN) {
+                                        TherapyPlanScreen(
+                                            viewModel = therapyPlanViewModel,
+                                            userProfile = userProfile!!,
+                                            onBack = { navController.popBackStack() }
                                         )
                                     }
 
@@ -535,6 +554,7 @@ class MainActivity : ComponentActivity() {
                                             viewModel = glucoseViewModel,
                                             userProfile = userProfile,
                                             entryId = id,
+                                            activePlan = activePlan,
                                             onBack = { navController.popBackStack() }
                                         )
                                     }
@@ -576,6 +596,7 @@ class MainActivity : ComponentActivity() {
                                             viewModel = foodViewModel,
                                             userProfile = userProfile,
                                             entryId = id,
+                                            activePlan = activePlan,
                                             onBack = { navController.popBackStack() }
                                         )
                                     }

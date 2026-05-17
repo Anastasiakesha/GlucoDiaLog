@@ -23,7 +23,8 @@ import com.example.glucodialog.ui.constants.Labels.DIABETES_TYPE_LABELS
 @Composable
 fun ProfileViewScreen(
     profile: UserProfile,
-    onEdit: () -> Unit
+    onEdit: () -> Unit,
+    onTherapyPlanClick: () -> Unit
 ) {
     val height = profile.height
     val weight = profile.weight
@@ -127,23 +128,6 @@ fun ProfileViewScreen(
             }
         }
 
-        Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(2.dp)) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.HealthAndSafety, contentDescription = null, tint = colorScheme.tertiary)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Инсулинотерапия", style = MaterialTheme.typography.titleMedium)
-                }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Болюсный:", style = MaterialTheme.typography.bodyMedium)
-                    Text("${profile.bolusInsulin} (${profile.bolusDose} ед)", style = MaterialTheme.typography.bodyMedium)
-                }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Базальный:", style = MaterialTheme.typography.bodyMedium)
-                    Text("${profile.basalInsulin} (${profile.basalDose} ед)", style = MaterialTheme.typography.bodyMedium)
-                }
-            }
-        }
 
         Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(2.dp)) {
             Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -172,19 +156,16 @@ fun ProfileViewScreen(
         Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(2.dp)) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Medication, contentDescription = null, tint = colorScheme.error)
+                    Icon(Icons.Default.MedicalServices, contentDescription = null, tint = colorScheme.primary)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Медикаменты", style = MaterialTheme.typography.titleMedium)
+                    Text("Терапия", style = MaterialTheme.typography.titleMedium)
                 }
-
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(profile.medication, style = MaterialTheme.typography.bodyMedium)
-                    Text("${profile.medicationDose} ${profile.medicationUnit}", style = MaterialTheme.typography.bodyMedium)
-                }
-                profile.medicationTimeMinutesFromMidnight?.let { minutes ->
-                    val hours = minutes / 60
-                    val mins = minutes % 60
-                    Text("Время приема: %02d:%02d".format(hours, mins), style = MaterialTheme.typography.bodySmall)
+                Text("Управляйте вашим планом лечения, инсулином и медикаментами.", style = MaterialTheme.typography.bodyMedium, color = colorScheme.onSurfaceVariant)
+                Button(
+                    onClick = { onTherapyPlanClick() },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Открыть план лечения")
                 }
             }
         }

@@ -14,6 +14,9 @@ import com.example.glucodialog.data.local.MedicationEntry
 import com.example.glucodialog.data.local.MedicationType
 import com.example.glucodialog.data.local.UserProfile
 import com.example.glucodialog.data.local.BloodPressureEntry
+import com.example.glucodialog.data.local.InsulinTherapyPlan
+import com.example.glucodialog.data.local.MedicationTherapyPlan
+import com.example.glucodialog.data.local.TherapyPlan
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -27,12 +30,14 @@ import com.example.glucodialog.data.migrations.MIGRATION_7_8
 import com.example.glucodialog.data.migrations.MIGRATION_8_9
 import com.example.glucodialog.data.migrations.MIGRATION_9_10
 import com.example.glucodialog.data.migrations.MIGRATION_10_11
+import com.example.glucodialog.data.migrations.MIGRATION_11_12
 import com.example.glucodialog.data.repository.ActivityDao
 import com.example.glucodialog.data.repository.BloodPressureDao
 import com.example.glucodialog.data.repository.FoodDao
 import com.example.glucodialog.data.repository.GlucoseDao
 import com.example.glucodialog.data.repository.InsulinDao
 import com.example.glucodialog.data.repository.MedicationDao
+import com.example.glucodialog.data.repository.TherapyPlanDao
 import com.example.glucodialog.data.repository.UserProfileDao
 import kotlinx.coroutines.flow.first
 
@@ -44,9 +49,12 @@ import kotlinx.coroutines.flow.first
         InsulinEntry::class, InsulinType::class,
         MedicationEntry::class, MedicationType::class,
         UserProfile::class,
-        BloodPressureEntry::class
+        BloodPressureEntry::class,
+        TherapyPlan::class,
+        InsulinTherapyPlan::class,
+        MedicationTherapyPlan::class
     ],
-    version = 11,
+    version = 12,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -58,6 +66,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun medicationDao(): MedicationDao
     abstract fun userProfileDao(): UserProfileDao
     abstract fun bloodPressureDao(): BloodPressureDao
+    abstract fun therapyPlanDao(): TherapyPlanDao
 
 
     companion object {
@@ -72,7 +81,7 @@ abstract class AppDatabase : RoomDatabase() {
                 )
 //                  .fallbackToDestructiveMigration(true)
                     .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10,
-                        MIGRATION_10_11
+                        MIGRATION_10_11, MIGRATION_11_12
                     )
                     .addCallback(AppDatabaseCallback())
                     .build()

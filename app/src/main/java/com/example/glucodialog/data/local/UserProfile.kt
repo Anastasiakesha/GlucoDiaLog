@@ -5,7 +5,8 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "user_profile")
 data class UserProfile(
-    @PrimaryKey val email: String, // email как уникальный ключ
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val email: String,
     val name: String,
     val gender: String,
     val weight: Double,
@@ -13,13 +14,5 @@ data class UserProfile(
     val diabetesType: String,
     val targetGlucoseLow: Double,
     val targetGlucoseHigh: Double,
-    val glucoseUnit: String,
-    val bolusInsulin: String,
-    val bolusDose: Double,
-    val basalInsulin: String,
-    val basalDose: Double,
-    val medication: String,
-    val medicationDose: Double,
-    val medicationUnit: String,
-    val medicationTimeMinutesFromMidnight: Int? = null
+    val glucoseUnit: String
 )

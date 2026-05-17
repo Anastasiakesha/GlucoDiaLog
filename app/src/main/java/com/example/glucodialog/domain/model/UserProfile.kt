@@ -1,6 +1,7 @@
 package com.example.glucodialog.domain.model
 
 data class UserProfile(
+    val id: Int = 0,
     val email: String,
     val name: String,
     val gender: String,
@@ -9,13 +10,5 @@ data class UserProfile(
     val diabetesType: String,
     val targetGlucoseLow: Double,
     val targetGlucoseHigh: Double,
-    val glucoseUnit: String,
-    val bolusInsulin: String,
-    val bolusDose: Double,
-    val basalInsulin: String,
-    val basalDose: Double,
-    val medication: String,
-    val medicationDose: Double,
-    val medicationUnit: String,
-    val medicationTimeMinutesFromMidnight: Int? = null
+    val glucoseUnit: String
 )

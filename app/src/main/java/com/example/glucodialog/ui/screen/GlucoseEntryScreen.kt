@@ -20,6 +20,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.room.util.copy
+import com.example.glucodialog.data.relations.TherapyPlanWithDetails
 import com.example.glucodialog.domain.model.GlucoseEntry
 import com.example.glucodialog.domain.model.UserProfile
 import com.example.glucodialog.ui.components.DateTimePickerButton
@@ -36,6 +37,7 @@ fun GlucoseEntryScreen(
     viewModel: GlucoseViewModel,
     userProfile: UserProfile?,
     entryId: Int = -1,
+    activePlan: TherapyPlanWithDetails?,
     onBack: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
@@ -56,13 +58,18 @@ fun GlucoseEntryScreen(
             correctionDose = "Корректирующая доза: —"
             return
         }
-        val tdd = userProfile.bolusDose + userProfile.basalDose
+
+        val totalBolus = activePlan?.insulinPlans?.filter { it.type?.type == "Болюсный" }?.sumOf { it.plan.dose } ?: 0.0
+        val totalBasal = activePlan?.insulinPlans?.filter { it.type?.type == "Базальный" }?.sumOf { it.plan.dose } ?: 0.0
+        val tdd = totalBolus + totalBasal
+
         val target = userProfile.targetGlucoseHigh
+
         correctionDose = if (tdd > 0 && glucoseMmolL > target) {
             val isf = 100 / tdd
             val excess = glucoseMmolL - target
             val dose = excess / isf
-            "Корректирующая доза: %.1f ед.".format(dose)
+            "Корректирующая доза: %.1f ед. (болюсного)".format(dose)
         } else {
             "Корректирующая доза: 0 ед."
         }

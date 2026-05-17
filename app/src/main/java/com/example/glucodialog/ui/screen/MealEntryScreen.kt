@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.example.glucodialog.data.relations.TherapyPlanWithDetails
 import com.example.glucodialog.domain.model.FoodEntry
 import com.example.glucodialog.domain.model.FoodType
 import com.example.glucodialog.domain.model.UserProfile
@@ -34,6 +35,7 @@ fun MealEntryScreen(
     viewModel: FoodViewModel,
     onBack: () -> Unit,
     userProfile: UserProfile?,
+    activePlan: TherapyPlanWithDetails?,
     entryId: Int = -1
 ) {
     val scope = rememberCoroutineScope()
@@ -58,13 +60,37 @@ fun MealEntryScreen(
     val expandedFood = remember { mutableStateOf(false) }
     val expandedUnit = remember { mutableStateOf(false) }
 
-    val carbRatio = remember(userProfile) {
-        userProfile?.let { profile ->
-            val tdd = profile.basalDose + profile.bolusDose
-            if (tdd > 0) 500 / tdd else null
-        }
+    val carbRatio = remember(activePlan) {
+        val totalBolus = activePlan?.insulinPlans?.filter { it.type?.type == "Болюсный" }?.sumOf { it.plan.dose } ?: 0.0
+        val totalBasal = activePlan?.insulinPlans?.filter { it.type?.type == "Базальный" }?.sumOf { it.plan.dose } ?: 0.0
+        val tdd = totalBolus + totalBasal
+        if (tdd > 0) 500 / tdd else null
     }
 
+    val isf = remember(activePlan) {
+        val totalBolus = activePlan?.insulinPlans?.filter { it.type?.type == "Болюсный" }?.sumOf { it.plan.dose } ?: 0.0
+        val totalBasal = activePlan?.insulinPlans?.filter { it.type?.type == "Базальный" }?.sumOf { it.plan.dose } ?: 0.0
+        val tdd = totalBolus + totalBasal
+        if (tdd > 0) 100 / tdd else null
+    }
+
+    val quantity = quantityText.toDoubleOrNull() ?: 0.0
+
+    val bolusDose: Double? = run {
+        val icr = carbRatio
+        val target = userProfile?.targetGlucoseHigh
+        val current = currentGlucose.toDoubleOrNull()
+
+        if (icr == null || icr <= 0.0 || current == null) null
+        else {
+            val mealInsulin = if (quantity > 0.0) ((selectedFood?.carbs ?: 0.0) * (quantity / 100.0)) / icr else 0.0
+
+            val sensitivity = isf ?: 2.0
+            val correction = if (target != null && current > target) (current - target) / sensitivity else 0.0
+
+            (mealInsulin + correction).coerceAtLeast(0.0)
+        }
+    }
     val isFormValid by derivedStateOf {
         selectedFood != null &&
                 !selectedUnit.isNullOrBlank() &&
@@ -271,7 +297,7 @@ fun MealEntryScreen(
             elevation = CardDefaults.cardElevation(4.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text(bolusDose?.let { "Рассчитанная доза: ${"%.1f".format(it)} ЕД" } ?: "Недостаточно данных для расчёта дозы")
+                Text(bolusDose?.let { "Рассчитанная доза: ${"%.1f".format(it)} ЕД (болюсного)" } ?: "Недостаточно данных для расчёта дозы")
             }
         }
 

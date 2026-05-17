@@ -99,14 +99,6 @@ object HealthAnalyzer {
 
         val warnings = mutableListOf<String>()
 
-        if (todayEntries.isEmpty()) {
-            warnings.add("Сегодня не зафиксирован прием лекарства.")
-        } else {
-            val totalDose = todayEntries.sumOf { it.dose.toDoubleOrNull() ?: 0.0 }
-            if (totalDose < userProfile.medicationDose) {
-                warnings.add("Принятая доза лекарства сегодня меньше рекомендованной: $totalDose из ${userProfile.medicationDose}")
-            }
-        }
 
         if (warnings.isNotEmpty()) {
             val message = warnings.joinToString("\n")

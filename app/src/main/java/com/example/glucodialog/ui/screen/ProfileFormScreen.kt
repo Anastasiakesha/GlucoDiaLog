@@ -8,24 +8,17 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.HealthAndSafety
-import androidx.compose.material.icons.filled.LocalHospital
-import androidx.compose.material.icons.filled.MedicalServices
-import androidx.compose.material.icons.filled.Medication
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.glucodialog.domain.model.UserProfile
 import com.example.glucodialog.ui.components.DropdownSelector
-import com.example.glucodialog.ui.components.TimePickerDialog
 import com.example.glucodialog.ui.constants.Labels.DIABETES_TYPE_LABELS
 import com.example.glucodialog.ui.constants.Labels.GLUCOSE_UNITS_PROFILE
-import com.example.glucodialog.ui.constants.Labels.MEDICATION_UNITS
-
 @SuppressLint("UnrememberedMutableState")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,7 +28,6 @@ fun ProfileFormScreen(
     onBack: () -> Unit
 ) {
     var formData by remember { mutableStateOf(profile) }
-    var showTimePicker by remember { mutableStateOf(false) }
     var emailError by remember { mutableStateOf<String?>(null) }
 
     val scrollState = rememberScrollState()
@@ -222,123 +214,6 @@ fun ProfileFormScreen(
             }
         }
 
-        Card(
-            colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceVariant),
-            elevation = CardDefaults.cardElevation(2.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Default.LocalHospital,
-                        contentDescription = null,
-                        tint = colorScheme.tertiary
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        " Инсулинотерапия",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = colorScheme.tertiary
-                    )
-                }
-                OutlinedTextField(
-                    value = formData.bolusInsulin,
-                    onValueChange = { formData = formData.copy(bolusInsulin = it) },
-                    label = { Text("Болюсный (название)") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                OutlinedTextField(
-                    value = if (formData.bolusDose == 0.0) "" else formData.bolusDose.toString(),
-                    onValueChange = { newValue ->
-                        formData = formData.copy(bolusDose = newValue.toDoubleOrNull() ?: 0.0)
-                    },
-                    label = { Text("Доза болюсного (ед)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("0.0") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                )
-
-                OutlinedTextField(
-                    value = formData.basalInsulin,
-                    onValueChange = { formData = formData.copy(basalInsulin = it) },
-                    label = { Text("Базальный (название)") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                OutlinedTextField(
-                    value = if (formData.basalDose == 0.0) "" else formData.basalDose.toString(),
-                    onValueChange = { newValue ->
-                        formData = formData.copy(basalDose = newValue.toDoubleOrNull() ?: 0.0)
-                    },
-                    label = { Text("Доза базального (ед)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("0.0") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                )
-
-            }
-        }
-
-        Card(
-            colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceVariant),
-            elevation = CardDefaults.cardElevation(2.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Default.Medication,
-                        contentDescription = null,
-                        tint = colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        " Медикаменты",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = colorScheme.primary
-                    )
-                }
-
-                OutlinedTextField(
-                    value = formData.medication,
-                    onValueChange = { formData = formData.copy(medication = it) },
-                    label = { Text("Название") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                OutlinedTextField(
-                    value = if (formData.medicationDose == 0.0) "" else formData.medicationDose.toString(),
-                    onValueChange = { newValue ->
-                        formData = formData.copy(medicationDose = newValue.toDoubleOrNull() ?: 0.0)
-                    },
-                    label = { Text("Доза") },
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("0.0") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                )
-
-
-                DropdownSelector(
-                    label = "Единица",
-                    options = MEDICATION_UNITS,
-                    selected = formData.medicationUnit,
-                    onSelect = { formData = formData.copy(medicationUnit = it) }
-                )
-
-                Button(onClick = { showTimePicker = true }) {
-                    Text(formData.medicationTimeMinutesFromMidnight?.let {
-                        "%02d:%02d".format(it / 60, it % 60)
-                    } ?: "Выбрать время")
-                }
-            }
-        }
 
         FilledTonalButton(
             onClick = { onUpdateProfile(formData) },
@@ -358,19 +233,5 @@ fun ProfileFormScreen(
             }
         }
 
-        if (showTimePicker) {
-            val initialHour = (formData.medicationTimeMinutesFromMidnight ?: 8 * 60) / 60
-            val initialMinute = (formData.medicationTimeMinutesFromMidnight ?: 8 * 60) % 60
-
-            TimePickerDialog(
-                initialHour = initialHour,
-                initialMinute = initialMinute,
-                onDismiss = { showTimePicker = false },
-                onConfirm = { h, m ->
-                    formData = formData.copy(medicationTimeMinutesFromMidnight = h * 60 + m)
-                    showTimePicker = false
-                }
-            )
-        }
     }
 }

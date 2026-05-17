@@ -6,6 +6,7 @@ import com.example.glucodialog.domain.model.UserProfile as DomainUserProfile
 
 fun LocalUserProfile.toDomain(): DomainUserProfile {
     return DomainUserProfile(
+        id = id,
         email = email,
         name = name,
         gender = gender,
@@ -14,20 +15,13 @@ fun LocalUserProfile.toDomain(): DomainUserProfile {
         diabetesType = diabetesType,
         targetGlucoseLow = targetGlucoseLow,
         targetGlucoseHigh = targetGlucoseHigh,
-        glucoseUnit = glucoseUnit,
-        bolusInsulin = bolusInsulin,
-        bolusDose = bolusDose,
-        basalInsulin = basalInsulin,
-        basalDose = basalDose,
-        medication = medication,
-        medicationDose = medicationDose,
-        medicationUnit = medicationUnit,
-        medicationTimeMinutesFromMidnight = medicationTimeMinutesFromMidnight
+        glucoseUnit = glucoseUnit
     )
 }
 
 fun DomainUserProfile.toLocal(): LocalUserProfile {
     return LocalUserProfile(
+        id = id,
         email = email,
         name = name,
         gender = gender,
@@ -36,14 +30,6 @@ fun DomainUserProfile.toLocal(): LocalUserProfile {
         diabetesType = diabetesType,
         targetGlucoseLow = targetGlucoseLow,
         targetGlucoseHigh = targetGlucoseHigh,
-        glucoseUnit = glucoseUnit,
-        bolusInsulin = bolusInsulin,
-        bolusDose = bolusDose,
-        basalInsulin = basalInsulin,
-        basalDose = basalDose,
-        medication = medication,
-        medicationDose = medicationDose,
-        medicationUnit = medicationUnit,
-        medicationTimeMinutesFromMidnight = medicationTimeMinutesFromMidnight
+        glucoseUnit = glucoseUnit
     )
 }
