@@ -49,13 +49,16 @@ fun GlucoseEntryScreen(
     var wasTouched by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var correctionDose by remember { mutableStateOf("Корректирующая доза: —") }
+    var carbsNeeded by remember { mutableStateOf("Быстрые углеводы: —") }
 
-    fun updateCorrectionDose() {
+    fun updateCalculations() {
         val glucoseMmolL = value.text.toDoubleOrNull()?.let { v ->
             if (selectedUnit == "мг/дл") v / 18.0 else v
         }
+
         if (glucoseMmolL == null || userProfile == null) {
             correctionDose = "Корректирующая доза: —"
+            carbsNeeded = "Быстрые углеводы: —"
             return
         }
 
@@ -63,15 +66,35 @@ fun GlucoseEntryScreen(
         val totalBasal = activePlan?.insulinPlans?.filter { it.type?.type == "Базальный" }?.sumOf { it.plan.dose } ?: 0.0
         val tdd = totalBolus + totalBasal
 
-        val target = userProfile.targetGlucoseHigh
+        val targetHigh = userProfile.targetGlucoseHigh
+        val targetLow = userProfile.targetGlucoseLow
 
-        correctionDose = if (tdd > 0 && glucoseMmolL > target) {
+        if (tdd > 0) {
             val isf = 100 / tdd
-            val excess = glucoseMmolL - target
-            val dose = excess / isf
-            "Корректирующая доза: %.1f ед. (болюсного)".format(dose)
+            val icr = 500 / tdd
+
+            if (glucoseMmolL > targetHigh) {
+                val excess = glucoseMmolL - targetHigh
+                val dose = excess / isf
+                correctionDose = "Корректирующая доза: %.1f ед.".format(dose)
+                carbsNeeded = "Быстрые углеводы: 0 г"
+            } else if (glucoseMmolL < targetLow) {
+                val deficit = targetLow - glucoseMmolL
+                val carbsPerMmol = icr / isf
+                var carbs = deficit * carbsPerMmol
+                carbs = maxOf(carbs, 15.0)
+                if (glucoseMmolL < 3.0) {
+                    carbs = maxOf(carbs, 20.0)
+                }
+                carbsNeeded = "Быстрые углеводы: %.0f г".format(carbs)
+                correctionDose = "Корректирующая доза: 0 ед."
+            } else {
+                correctionDose = "Корректирующая доза: 0 ед."
+                carbsNeeded = "Быстрые углеводы: 0 г"
+            }
         } else {
-            "Корректирующая доза: 0 ед."
+            correctionDose = "Мало данных в плане лечения"
+            carbsNeeded = "Мало данных в плане лечения"
         }
     }
 
@@ -84,7 +107,7 @@ fun GlucoseEntryScreen(
                 selectedUnit = entry.unit
                 calendar = Calendar.getInstance().apply { timeInMillis = entry.timestamp }
 
-                updateCorrectionDose()
+                updateCalculations()
             }
         }
     }
@@ -152,7 +175,7 @@ fun GlucoseEntryScreen(
                                 )
 
                                 errorMessage = null
-                                updateCorrectionDose()
+                                updateCalculations()
                             },
                             label = { Text("Значение ($selectedUnit)") },
                             placeholder = { Text(placeholderText) },
@@ -182,7 +205,7 @@ fun GlucoseEntryScreen(
                                 onClick = {
                                     selectedUnit = unit
                                     expandedUnit = false
-                                    updateCorrectionDose()
+                                    updateCalculations()
                                 }
                             )
                         }
@@ -237,6 +260,7 @@ fun GlucoseEntryScreen(
                     maxLines = 3
                 )
                 Text(correctionDose, style = MaterialTheme.typography.bodyMedium)
+                Text(carbsNeeded, style = MaterialTheme.typography.bodyMedium)
             }
         }
 
@@ -264,7 +288,7 @@ fun GlucoseEntryScreen(
             onClick = {
                 val numeric = value.text.toDoubleOrNull() ?: return@Button
                 val entry = GlucoseEntry(
-                    id = if (entryId != -1) entryId else 0, // <--- ВАЖНО!
+                    id = if (entryId != -1) entryId else 0,
                     glucoseLevel = numeric,
                     unit = selectedUnit,
                     timestamp = calendar.timeInMillis,
