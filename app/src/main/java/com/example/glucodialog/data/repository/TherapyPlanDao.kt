@@ -16,10 +16,10 @@ interface TherapyPlanDao {
     suspend fun insertTherapyPlan(plan: TherapyPlan): Long
 
     @Insert
-    suspend fun insertInsulinPlan(plan: InsulinTherapyPlan)
+    suspend fun insertInsulinPlan(plan: InsulinTherapyPlan): Long
 
     @Insert
-    suspend fun insertMedicationPlan(plan: MedicationTherapyPlan)
+    suspend fun insertMedicationPlan(plan: MedicationTherapyPlan): Long
 
     @Query("SELECT * FROM therapy_plans WHERE userId = :userId AND endDate IS NULL LIMIT 1")
     fun getActivePlanFlow(userId: Int): Flow<TherapyPlan?>

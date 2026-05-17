@@ -1,5 +1,6 @@
 package com.example.glucodialog.ui.viewmodel
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -8,6 +9,7 @@ import com.example.glucodialog.data.relations.TherapyPlanWithDetails
 import com.example.glucodialog.data.repository.InsulinDao
 import com.example.glucodialog.data.repository.MedicationDao
 import com.example.glucodialog.data.repository.TherapyPlanDao
+import com.example.glucodialog.utils.ReminderScheduler
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -41,22 +43,52 @@ class TherapyPlanViewModel(
         therapyPlanDao.insertTherapyPlan(newPlan)
     }
 
-    fun finishCurrentPlan(planId: Int) = viewModelScope.launch {
-        therapyPlanDao.finishPlan(planId, System.currentTimeMillis())
+    fun finishCurrentPlan(context: Context, planDetails: TherapyPlanWithDetails) = viewModelScope.launch {
+        planDetails.insulinPlans.forEach { ip ->
+            ReminderScheduler.cancelReminder(context, ip.plan.id)
+        }
+
+        planDetails.medicationPlans.forEach { mp ->
+            ReminderScheduler.cancelReminder(context, mp.plan.id + 10000)
+        }
+
+        therapyPlanDao.finishPlan(planDetails.plan.id, System.currentTimeMillis())
     }
 
-    fun addInsulinToPlan(planId: Int, typeId: Int, dose: Double, timeMinutes: Int?) = viewModelScope.launch {
+    fun addInsulinToPlan(context: Context, planId: Int, typeId: Int, dose: Double, timeMinutes: Int?) = viewModelScope.launch {
         val entry = InsulinTherapyPlan(
             therapyPlanId = planId, insulinTypeId = typeId, dose = dose, reminderTimeMinutes = timeMinutes
         )
-        therapyPlanDao.insertInsulinPlan(entry)
+        val insertedId = therapyPlanDao.insertInsulinPlan(entry).toInt()
+
+        if (timeMinutes != null) {
+            val type = insulinDao.getInsulinById(typeId)
+            ReminderScheduler.scheduleReminder(
+                context = context,
+                id = insertedId,
+                timeMinutes = timeMinutes,
+                title = "Время приема инсулина",
+                message = "Пора ввести инсулин ${type?.name ?: ""}, дозировка: $dose ед."
+            )
+        }
     }
 
-    fun addMedicationToPlan(planId: Int, typeId: Int, dose: String, timeMinutes: Int?) = viewModelScope.launch {
+    fun addMedicationToPlan(context: Context, planId: Int, typeId: Int, dose: String, timeMinutes: Int?) = viewModelScope.launch {
         val entry = MedicationTherapyPlan(
             therapyPlanId = planId, medicationTypeId = typeId, dose = dose, reminderTimeMinutes = timeMinutes
         )
-        therapyPlanDao.insertMedicationPlan(entry)
+        val insertedId = therapyPlanDao.insertMedicationPlan(entry).toInt()
+
+        if (timeMinutes != null) {
+            val type = medicationDao.getMedicationById(typeId)
+            ReminderScheduler.scheduleReminder(
+                context = context,
+                id = insertedId + 10000,
+                timeMinutes = timeMinutes,
+                title = "Прием препарата",
+                message = "Пора принять лекарство ${type?.name ?: ""}, доза: $dose"
+            )
+        }
     }
 }
 

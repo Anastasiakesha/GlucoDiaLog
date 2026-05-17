@@ -12,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.glucodialog.data.local.InsulinType
@@ -40,6 +41,8 @@ fun TherapyPlanScreen(
 
     var showInsulinDialog by remember { mutableStateOf(false) }
     var showMedDialog by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -130,7 +133,7 @@ fun TherapyPlanScreen(
                 }
 
                 Button(
-                    onClick = { viewModel.finishCurrentPlan(planDetails.plan.id) },
+                    onClick = { viewModel.finishCurrentPlan(context, planDetails) },
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
@@ -142,10 +145,10 @@ fun TherapyPlanScreen(
 
     if (showInsulinDialog) {
         var dose by remember { mutableStateOf("") }
-        var type by remember { mutableStateOf<InsulinType?>(null) } // <-- Теперь null
+        var type by remember { mutableStateOf<InsulinType?>(null) }
         var time by remember { mutableStateOf<Int?>(null) }
         var showTime by remember { mutableStateOf(false) }
-        var expanded by remember { mutableStateOf(false) } // Для DropdownMenu
+        var expanded by remember { mutableStateOf(false) }
 
         AlertDialog(
             onDismissRequest = { showInsulinDialog = false },
@@ -185,11 +188,11 @@ fun TherapyPlanScreen(
                 Button(
                     onClick = {
                         if (type != null && dose.isNotBlank()) {
-                            viewModel.addInsulinToPlan(activePlan!!.plan.id, type!!.id, dose.toDoubleOrNull() ?: 0.0, time)
+                            viewModel.addInsulinToPlan(context, activePlan!!.plan.id, type!!.id, dose.toDoubleOrNull() ?: 0.0, time)
                             showInsulinDialog = false
                         }
                     },
-                    enabled = type != null && dose.isNotBlank() // Кнопка неактивна, пока не выбран тип
+                    enabled = type != null && dose.isNotBlank()
                 ) { Text("Сохранить") }
             },
             dismissButton = { TextButton(onClick = { showInsulinDialog = false }) { Text("Отмена") } }
@@ -202,7 +205,7 @@ fun TherapyPlanScreen(
 
     if (showMedDialog) {
         var dose by remember { mutableStateOf("") }
-        var type by remember { mutableStateOf<MedicationType?>(null) } // <-- Теперь null
+        var type by remember { mutableStateOf<MedicationType?>(null) }
         var time by remember { mutableStateOf<Int?>(null) }
         var showTime by remember { mutableStateOf(false) }
         var expanded by remember { mutableStateOf(false) }
@@ -245,7 +248,7 @@ fun TherapyPlanScreen(
                 Button(
                     onClick = {
                         if (type != null && dose.isNotBlank()) {
-                            viewModel.addMedicationToPlan(activePlan!!.plan.id, type!!.id, dose, time)
+                            viewModel.addMedicationToPlan(context, activePlan!!.plan.id, type!!.id, dose, time)
                             showMedDialog = false
                         }
                     },
