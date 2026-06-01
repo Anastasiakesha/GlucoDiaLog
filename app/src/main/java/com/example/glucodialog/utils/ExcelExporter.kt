@@ -99,6 +99,19 @@ object ExcelExporter {
                 )
             }
 
+            db.bloodPressureDao().getAllBloodPressureEntriesOnce().forEach {
+                allEntries.add(
+                    listOf(
+                        "Давление",
+                        dateFormat.format(Date(it.timestamp)),
+                        "АД и Пульс",
+                        "${it.systolic}/${it.diastolic}",
+                        "мм рт.ст.",
+                        "Пульс: ${it.pulse}"
+                    )
+                )
+            }
+
             allEntries.sortByDescending {
                 try {
                     dateFormat.parse(it[1])?.time ?: 0L

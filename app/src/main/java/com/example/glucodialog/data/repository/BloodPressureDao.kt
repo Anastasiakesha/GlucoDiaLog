@@ -19,6 +19,9 @@ interface BloodPressureDao {
     @Query("SELECT * FROM blood_pressure_entries ORDER BY timestamp DESC")
     fun getAllEntries(): Flow<List<BloodPressureEntry>>
 
+    @Query("SELECT * FROM blood_pressure_entries ORDER BY timestamp DESC")
+    suspend fun getAllBloodPressureEntriesOnce(): List<BloodPressureEntry>
+
     @Update
     suspend fun updateBloodPressureEntry(entry: BloodPressureEntry)
 

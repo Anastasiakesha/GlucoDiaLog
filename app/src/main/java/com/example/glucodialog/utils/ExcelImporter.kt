@@ -6,6 +6,7 @@ import android.util.Log
 import android.widget.Toast
 import com.example.glucodialog.data.*
 import com.example.glucodialog.data.local.ActivityEntry
+import com.example.glucodialog.data.local.BloodPressureEntry
 import com.example.glucodialog.data.local.FoodEntry
 import com.example.glucodialog.data.local.GlucoseEntry
 import com.example.glucodialog.data.local.InsulinEntry
@@ -181,6 +182,27 @@ object ExcelImporter {
                                 Log.d(TAG, "Строка $i импортирована: Питание")
                             }
 
+                            "Давление" -> {
+                                val bpValues = valueStr.split("/")
+                                val systolic = bpValues.getOrNull(0)?.toIntOrNull()
+                                val diastolic = bpValues.getOrNull(1)?.toIntOrNull()
+
+                                val pulse = note.filter { it.isDigit() }.toIntOrNull() ?: 70
+
+                                if (systolic != null && diastolic != null) {
+                                    db.bloodPressureDao().insertBloodPressureEntry(
+                                        BloodPressureEntry(
+                                            timestamp = timestamp,
+                                            systolic = systolic,
+                                            diastolic = diastolic,
+                                            pulse = pulse
+                                        )
+                                    )
+                                    Log.d(TAG, "Строка $i импортирована: Давление")
+                                } else {
+                                    Log.d(TAG, "Строка $i пропущена: неверный формат давления '$valueStr'")
+                                }
+                            }
                             else -> {
                                 Log.d(TAG, "Строка $i пропущена: неизвестный тип '$type'")
                             }

@@ -18,11 +18,12 @@ import java.util.*
 object PdfExporter {
 
     private val typeColors = mapOf(
-        "Глюкоза" to Color.parseColor("#BBDEFB"),    // пастельный голубой
-        "Питание" to Color.parseColor("#FFF9C4"),    // пастельный желтый
-        "Инсулин" to Color.parseColor("#C8E6C9"),    // пастельный зеленый
-        "Активность" to Color.parseColor("#FFCCBC"), // пастельный оранжевый
-        "Лекарство" to Color.parseColor("#D1C4E9")   // пастельный фиолетовый
+        "Глюкоза" to Color.parseColor("#BBDEFB"),
+        "Питание" to Color.parseColor("#FFF9C4"),
+        "Инсулин" to Color.parseColor("#C8E6C9"),
+        "Активность" to Color.parseColor("#FFCCBC"),
+        "Лекарство" to Color.parseColor("#D1C4E9"),
+        "Давление" to Color.parseColor("#FCE4EC"),
     )
 
     suspend fun exportAllData(context: Context, db: AppDatabase) = withContext(Dispatchers.IO) {
@@ -103,6 +104,9 @@ object PdfExporter {
             }
             db.foodDao().getAllFoodEntriesOnceWithItems().forEach {
                 allEntries.add(Triple(it.entry.timestamp, listOf("Питание", dateTimeFormat.format(Date(it.entry.timestamp)), it.foodItem?.name ?: "", it.entry.quantity.toString(), it.entry.unit, "", it.foodItem?.carbs.toString(), it.foodItem?.calories.toString(), it.foodItem?.proteins.toString(), it.foodItem?.fats.toString()), "Питание"))
+            }
+            db.bloodPressureDao().getAllBloodPressureEntriesOnce().forEach {
+                allEntries.add(Triple(it.timestamp, listOf("Давление", dateTimeFormat.format(Date(it.timestamp)), "АД", "${it.systolic}/${it.diastolic}", "мм рт.ст.", "Пульс: ${it.pulse}", "", "", "", ""), "Давление"))
             }
 
             allEntries.sortByDescending { it.first }
