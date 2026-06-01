@@ -10,6 +10,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bloodtype
 import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.MedicalServices
 import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material.icons.filled.Timer
@@ -27,6 +28,23 @@ import com.example.glucodialog.ui.components.DashboardStatCard
 import com.example.glucodialog.ui.components.filterByRange
 import com.example.glucodialog.ui.constants.ChartType
 import androidx.compose.foundation.BorderStroke
+import com.example.glucodialog.utils.AdrenalineSpikeRule
+import com.example.glucodialog.utils.DawnPhenomenonRule
+import com.example.glucodialog.utils.DelayedExerciseHypoRule
+import com.example.glucodialog.utils.Facts
+import com.example.glucodialog.utils.GastroparesisRule
+import com.example.glucodialog.utils.GestationalMacrosomiaRule
+import com.example.glucodialog.utils.HypoUnawarenessRule
+import com.example.glucodialog.utils.IncorrectICRRule
+import com.example.glucodialog.utils.LacticAcidosisRule
+import com.example.glucodialog.utils.LipohypertrophyRule
+import com.example.glucodialog.utils.NephropathyRiskRule
+import com.example.glucodialog.utils.PizzaEffectRule
+import com.example.glucodialog.utils.PreeclampsiaRule
+import com.example.glucodialog.utils.RuleEngine
+import com.example.glucodialog.utils.SevereInsulinResistanceRule
+import com.example.glucodialog.utils.SickDayRule
+import com.example.glucodialog.utils.SomogyiEffectRule
 import java.util.*
 
 @Composable
@@ -35,7 +53,8 @@ fun Dashboard(
     foodEntriesWithItems: List<FoodEntryWithTypeDomain>,
     insulinEntriesWithTypes: List<InsulinEntryWithTypeDomain>,
     activityEntriesWithTypes: List<ActivityEntryWithTypeDomain>,
-    medicationEntriesWithTypes: List<MedicationEntryWithTypeDomain>
+    medicationEntriesWithTypes: List<MedicationEntryWithTypeDomain>,
+    bloodPressureRecords: List<BloodPressureEntry>
 ) {
 
     var animationProgress by remember { mutableStateOf(0f) }
@@ -90,18 +109,60 @@ fun Dashboard(
     val avgDailyMeasurements = measurementsPerDay.values.average()
     val estimatedHbA1c = (avgGlucose + 2.59) / 1.59
 
+    // Цвета
     val lowColor = Color(0xFF1976D2)
     val normalColor = Color(0xFF388E3C)
     val highColor = Color(0xFFFFA000)
     val veryHighColor = Color(0xFFD32F2F)
     val carbsColor = Color(0xFFFFC107)
-    val insulinColor = Color(0xFF0288D1)
     val activityColor = Color(0xFF7B1FA2)
     val medicationColor = Color(0xFFE64A19)
     val chartBackgroundColor = Color(0xFFEDE7F6)
     val mediumColor = Color(0xFFFF7043)
     val timeInRangeColor = Color(0xFFF06292)
     val glucoseStatsCardColor = MaterialTheme.colorScheme.primaryContainer
+
+    val expertTips = remember(glucoseEntries, activityEntriesWithTypes) {
+        val engine = RuleEngine().apply {
+            registerRule(NephropathyRiskRule())
+            registerRule(PreeclampsiaRule())
+            registerRule(SomogyiEffectRule())
+            registerRule(DawnPhenomenonRule())
+            registerRule(GastroparesisRule())
+            registerRule(SevereInsulinResistanceRule())
+            registerRule(HypoUnawarenessRule())
+            registerRule(PizzaEffectRule())
+            registerRule(DelayedExerciseHypoRule())
+            registerRule(AdrenalineSpikeRule())
+            registerRule(IncorrectICRRule())
+            registerRule(GestationalMacrosomiaRule())
+            registerRule(LacticAcidosisRule())
+            registerRule(SickDayRule())
+            registerRule(LipohypertrophyRule())
+        }
+
+        val facts = Facts()
+        val latestEntry = glucoseEntries.maxByOrNull { it.timestamp }
+
+        if (latestEntry != null) {
+            val latestGlucoseMmol = if (latestEntry.unit == "мг/дл") latestEntry.glucoseLevel / 18.0 else latestEntry.glucoseLevel
+
+            val twoHoursAgo = System.currentTimeMillis() - 2 * 60 * 60 * 1000
+            val recentActivityMins = activityEntriesWithTypes
+                .filter { it.entry.timestamp > twoHoursAgo }
+                .sumOf { it.entry.durationMinutes }
+
+            val cal = Calendar.getInstance().apply { timeInMillis = latestEntry.timestamp }
+
+            // Наполняем рабочую память фактами
+            facts.put("latest_glucose", latestGlucoseMmol)
+            facts.put("activity_last_2_hours", recentActivityMins)
+            facts.put("current_hour", cal.get(Calendar.HOUR_OF_DAY))
+        }
+
+        // Запускаем логический вывод
+        engine.fire(facts)
+    }
 
     Column(
         modifier = Modifier
@@ -131,7 +192,7 @@ fun Dashboard(
 
             DashboardStatCard(
                 icon = Icons.Filled.ShowChart,
-                title = "Среднее значение глюкозы",
+                title = "Среднее значение",
                 value = if (averageGlucose > 0) "%.1f".format(averageGlucose) else "Нет данных",
                 subtitle = "Последние записи",
                 color = mediumColor,
@@ -181,6 +242,45 @@ fun Dashboard(
                 color = medicationColor,
                 modifier = Modifier.weight(1f)
             )
+        }
+
+        // === КАРТОЧКА ЭКСПЕРТНОЙ СИСТЕМЫ ===
+        if (glucoseEntries.isNotEmpty()) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .offset(y = offsetY.dp)
+                    .alpha(alpha),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD)), // Светло-голубой фон
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Filled.Lightbulb, contentDescription = "Анализ", tint = Color(0xFF1976D2))
+                        Spacer(Modifier.width(8.dp))
+                        Text("Умный помощник", style = MaterialTheme.typography.titleMedium, color = Color(0xFF1976D2))
+                    }
+
+                    if (expertTips.isEmpty()) {
+                        Text(
+                            "Ваши последние показатели стабильны. Продолжайте в том же духе! Вы отлично справляетесь.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    } else {
+                        expertTips.forEach { tip ->
+                            // Исправлена ошибка: crossAxisAlignment -> verticalAlignment
+                            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+                                Text("• ", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(tip, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         if (glucoseEntries.isEmpty()) {
@@ -239,7 +339,6 @@ fun Dashboard(
                     )
                 }
             }
-
 
             if (glucoseEntries.size >= 2) {
 
@@ -411,11 +510,9 @@ fun foodChartFromEntries(entries: List<FoodEntryWithTypeDomain>): ChartData {
             ChartLine(sorted.map { ChartPoint(calculateNutrient(it, "protein"), it.entry.timestamp) }, Color(0xFF4CAF50), "Белки"),
             ChartLine(sorted.map { ChartPoint(calculateNutrient(it, "fat"), it.entry.timestamp) }, Color(0xFF2196F3), "Жиры"),
             ChartLine(sorted.map { ChartPoint(calculateNutrient(it, "calories") / 10f, it.entry.timestamp) }, Color(0xFFE91E63), "Кал/10")
-            // Калории делим на 10, чтобы график не "улетел" слишком высоко относительно БЖУ
         )
     )
 }
-
 
 fun glucoseStatus(value: Double?): String {
     return when {

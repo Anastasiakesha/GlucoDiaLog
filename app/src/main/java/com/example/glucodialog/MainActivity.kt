@@ -519,7 +519,8 @@ class MainActivity : ComponentActivity() {
                                                     entry = medicationEntry,
                                                     type = medicationTypes.find { it.id == medicationEntry.medicationTypeId }
                                                 )
-                                            }
+                                            },
+                                            bloodPressureRecords = bpRecords
                                         )
                                     }
 
