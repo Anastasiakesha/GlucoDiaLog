@@ -17,6 +17,11 @@ object Labels {
         "mgdl" to "мг/дл"
     )
 
+    val GENDER_LABELS = mapOf(
+        "male" to "Мужской",
+        "female" to "Женский"
+    )
+
     val GLUCOSE_UNITS = listOf("ммоль/л", "мг/дл")
 
     val DURATION_OPTIONS = listOf("Короткий", "Средний", "Длинный")

@@ -18,6 +18,7 @@ import com.example.glucodialog.ExportPDFActivity
 import com.example.glucodialog.ExportReportActivity
 import com.example.glucodialog.ImportActivity
 import com.example.glucodialog.domain.model.UserProfile
+import com.example.glucodialog.ui.constants.Labels
 import com.example.glucodialog.ui.constants.Labels.DIABETES_TYPE_LABELS
 
 
@@ -84,7 +85,7 @@ fun ProfileViewScreen(
                 Column {
                     Text(profile.name, style = MaterialTheme.typography.headlineSmall)
                     Text(
-                        "${profile.gender} • ${DIABETES_TYPE_LABELS[profile.diabetesType] ?: ""}",
+                        "${Labels.GENDER_LABELS[profile.gender] ?: profile.gender} • ${DIABETES_TYPE_LABELS[profile.diabetesType] ?: ""}",
                         style = MaterialTheme.typography.bodyMedium,
                         color = colorScheme.onSurfaceVariant
                     )

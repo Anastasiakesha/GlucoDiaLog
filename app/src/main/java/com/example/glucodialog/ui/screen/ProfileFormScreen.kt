@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.material3.OutlinedButton
 import com.example.glucodialog.domain.model.UserProfile
 import com.example.glucodialog.ui.components.DropdownSelector
+import com.example.glucodialog.ui.constants.Labels
 import com.example.glucodialog.ui.constants.Labels.DIABETES_TYPE_LABELS
 import com.example.glucodialog.ui.constants.Labels.GLUCOSE_UNITS_PROFILE
 import java.util.Calendar
@@ -135,7 +136,7 @@ fun ProfileFormScreen(
 
                 DropdownSelector(
                     label = "Пол",
-                    options = mapOf("female" to "Женский", "male" to "Мужской"),
+                    options = Labels.GENDER_LABELS,
                     selected = formData.gender,
                     onSelect = { formData = formData.copy(gender = it) }
                 )
