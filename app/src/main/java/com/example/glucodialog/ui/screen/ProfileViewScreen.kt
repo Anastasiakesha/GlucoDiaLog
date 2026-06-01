@@ -11,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalContext
 import com.example.glucodialog.ExportPDFActivity
@@ -24,7 +25,8 @@ import com.example.glucodialog.ui.constants.Labels.DIABETES_TYPE_LABELS
 fun ProfileViewScreen(
     profile: UserProfile,
     onEdit: () -> Unit,
-    onTherapyPlanClick: () -> Unit
+    onTherapyPlanClick: () -> Unit,
+    onFetalGrowthClick: () -> Unit
 ) {
     val height = profile.height
     val weight = profile.weight
@@ -148,6 +150,38 @@ fun ProfileViewScreen(
                         Text("Максимум", style = MaterialTheme.typography.bodyMedium)
                         Text("${profile.targetGlucoseHigh}", style = MaterialTheme.typography.titleLarge, color = colorScheme.primary)
                         Text(profile.glucoseUnit, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
+        }
+
+        if (profile.gender == "female" && profile.pregnancyLmpTimestamp != null) {
+            Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(2.dp)) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Default.AccessibilityNew,
+                            contentDescription = null,
+                            tint = colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            "Отслеживание макросомии плода",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
+
+                    OutlinedButton(
+                        onClick = { onFetalGrowthClick() },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFE91E63))
+                    ) {
+                        Icon(Icons.Default.ChildCare, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Оценка веса плода (УЗИ)")
                     }
                 }
             }

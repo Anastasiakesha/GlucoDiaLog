@@ -31,6 +31,7 @@ import com.example.glucodialog.data.migrations.MIGRATION_8_9
 import com.example.glucodialog.data.migrations.MIGRATION_9_10
 import com.example.glucodialog.data.migrations.MIGRATION_10_11
 import com.example.glucodialog.data.migrations.MIGRATION_11_12
+import com.example.glucodialog.data.migrations.MIGRATION_12_13
 import com.example.glucodialog.data.repository.ActivityDao
 import com.example.glucodialog.data.repository.BloodPressureDao
 import com.example.glucodialog.data.repository.FoodDao
@@ -54,7 +55,7 @@ import kotlinx.coroutines.flow.first
         InsulinTherapyPlan::class,
         MedicationTherapyPlan::class
     ],
-    version = 12,
+    version = 13,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -81,7 +82,7 @@ abstract class AppDatabase : RoomDatabase() {
                 )
 //                  .fallbackToDestructiveMigration(true)
                     .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10,
-                        MIGRATION_10_11, MIGRATION_11_12
+                        MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13
                     )
                     .addCallback(AppDatabaseCallback())
                     .build()

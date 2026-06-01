@@ -15,7 +15,8 @@ fun LocalUserProfile.toDomain(): DomainUserProfile {
         diabetesType = diabetesType,
         targetGlucoseLow = targetGlucoseLow,
         targetGlucoseHigh = targetGlucoseHigh,
-        glucoseUnit = glucoseUnit
+        glucoseUnit = glucoseUnit,
+        pregnancyLmpTimestamp = pregnancyLmpTimestamp
     )
 }
 
@@ -30,6 +31,7 @@ fun DomainUserProfile.toLocal(): LocalUserProfile {
         diabetesType = diabetesType,
         targetGlucoseLow = targetGlucoseLow,
         targetGlucoseHigh = targetGlucoseHigh,
-        glucoseUnit = glucoseUnit
+        glucoseUnit = glucoseUnit,
+        pregnancyLmpTimestamp = pregnancyLmpTimestamp
     )
 }

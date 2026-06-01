@@ -85,6 +85,7 @@ class MainActivity : ComponentActivity() {
         const val MEDICATION = "medication"
         const val BLOOD_PRESSURE = "blood_pressure"
         const val THERAPY_PLAN = "therapy_plan"
+        const val FETAL_GROWTH = "fetal_growth"
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
@@ -481,7 +482,8 @@ class MainActivity : ComponentActivity() {
                                     onUpdateProfile = { updatedProfile ->
                                         viewModel.insertUserProfile(updatedProfile)
                                     },
-                                    onBack = { finish() }
+                                    onBack = { finish() },
+                                    userProfile = userProfile!!
                                 )
                             }
 
@@ -528,8 +530,13 @@ class MainActivity : ComponentActivity() {
                                         ProfileViewScreen(
                                             profile = userProfile!!,
                                             onEdit = { navController.navigate(Routes.PROFILE_FORM) },
-                                            onTherapyPlanClick = { navController.navigate(Routes.THERAPY_PLAN) }
+                                            onTherapyPlanClick = { navController.navigate(Routes.THERAPY_PLAN) },
+                                            onFetalGrowthClick = { navController.navigate(Routes.FETAL_GROWTH) }
                                         )
+                                    }
+
+                                    composable(Routes.FETAL_GROWTH) {
+                                        FetalGrowthScreen(onBack = { navController.popBackStack() })
                                     }
 
                                     composable(Routes.THERAPY_PLAN) {
@@ -547,7 +554,8 @@ class MainActivity : ComponentActivity() {
                                                 viewModel.updateUserProfile(updatedProfile)
                                                 navController.popBackStack()
                                             },
-                                            onBack = { navController.popBackStack() }
+                                            onBack = { navController.popBackStack() },
+                                            userProfile = userProfile!!
                                         )
                                     }
 

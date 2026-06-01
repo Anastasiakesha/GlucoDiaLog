@@ -14,5 +14,6 @@ data class UserProfile(
     val diabetesType: String,
     val targetGlucoseLow: Double,
     val targetGlucoseHigh: Double,
-    val glucoseUnit: String
+    val glucoseUnit: String,
+    val pregnancyLmpTimestamp: Long? = null
 )

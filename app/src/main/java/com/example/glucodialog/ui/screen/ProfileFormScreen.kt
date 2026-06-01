@@ -3,35 +3,56 @@ package com.example.glucodialog.ui.screen
 import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.HealthAndSafety
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
+import java.util.Locale
+import java.text.SimpleDateFormat
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.OutlinedButton
 import com.example.glucodialog.domain.model.UserProfile
 import com.example.glucodialog.ui.components.DropdownSelector
 import com.example.glucodialog.ui.constants.Labels.DIABETES_TYPE_LABELS
 import com.example.glucodialog.ui.constants.Labels.GLUCOSE_UNITS_PROFILE
+import java.util.Calendar
+import java.util.Date
+
 @SuppressLint("UnrememberedMutableState")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileFormScreen(
     profile: UserProfile,
     onUpdateProfile: (UserProfile) -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    userProfile: UserProfile?
 ) {
     var formData by remember { mutableStateOf(profile) }
     var emailError by remember { mutableStateOf<String?>(null) }
 
     val scrollState = rememberScrollState()
     val colorScheme = MaterialTheme.colorScheme
+
+    var isPregnancyActive by remember {
+        mutableStateOf(formData.pregnancyLmpTimestamp != null)
+    }
+
+    LaunchedEffect(formData.gender) {
+        if (formData.gender != "female") {
+            isPregnancyActive = false
+            formData = formData.copy(pregnancyLmpTimestamp = null)
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -214,6 +235,64 @@ fun ProfileFormScreen(
             }
         }
 
+        if (profile.gender == "female") {
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Активная беременность", style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        "Включает расчет срока и макросомии плода",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(
+                    checked = isPregnancyActive,
+                    onCheckedChange = {
+                        isPregnancyActive = it
+                        if (!it) formData = formData.copy(pregnancyLmpTimestamp = null)
+                    }
+                )
+            }
+
+            if (isPregnancyActive) {
+                val context = LocalContext.current
+                val sdf = remember { SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()) }
+
+                OutlinedButton(
+                    onClick = {
+                        val calendar = Calendar.getInstance()
+                        formData.pregnancyLmpTimestamp?.let { calendar.timeInMillis = it }
+
+                        android.app.DatePickerDialog(
+                            context,
+                            { _, year, month, day ->
+                                val selectedCal = Calendar.getInstance()
+                                selectedCal.set(year, month, day)
+                                formData = formData.copy(pregnancyLmpTimestamp = selectedCal.timeInMillis)
+                            },
+                            calendar.get(Calendar.YEAR),
+                            calendar.get(Calendar.MONTH),
+                            calendar.get(Calendar.DAY_OF_MONTH)
+                        ).apply {
+                            datePicker.maxDate = System.currentTimeMillis()
+                        }.show()
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    val dateText = formData.pregnancyLmpTimestamp?.let { sdf.format(Date(it)) }
+                        ?: "Дата последней менструации (LMP)"
+                    Icon(Icons.Default.DateRange, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text(dateText)
+                }
+            }
+        }
 
         FilledTonalButton(
             onClick = { onUpdateProfile(formData) },
