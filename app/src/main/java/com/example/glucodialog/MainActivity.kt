@@ -472,7 +472,8 @@ class MainActivity : ComponentActivity() {
                                             diabetesType = "",
                                             targetGlucoseLow = 0.0,
                                             targetGlucoseHigh = 0.0,
-                                            glucoseUnit = ""
+                                            glucoseUnit = "",
+                                            pregnancyLmpTimestamp = null
                                         )
                                     )
                                 }
@@ -483,7 +484,6 @@ class MainActivity : ComponentActivity() {
                                         viewModel.insertUserProfile(updatedProfile)
                                     },
                                     onBack = { finish() },
-                                    userProfile = userProfile!!
                                 )
                             }
 
@@ -555,7 +555,6 @@ class MainActivity : ComponentActivity() {
                                                 navController.popBackStack()
                                             },
                                             onBack = { navController.popBackStack() },
-                                            userProfile = userProfile!!
                                         )
                                     }
 

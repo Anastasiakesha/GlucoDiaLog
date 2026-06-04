@@ -36,7 +36,6 @@ fun ProfileFormScreen(
     profile: UserProfile,
     onUpdateProfile: (UserProfile) -> Unit,
     onBack: () -> Unit,
-    userProfile: UserProfile?
 ) {
     var formData by remember { mutableStateOf(profile) }
     var emailError by remember { mutableStateOf<String?>(null) }
